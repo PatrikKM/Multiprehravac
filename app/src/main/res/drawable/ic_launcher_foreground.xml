@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Outer Green Accent Ring -->
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M54,20 C72.78,20 88,35.22 88,54 C88,72.78 72.78,88 54,88 C35.22,88 20,72.78 20,54 C20,35.22 35.22,20 54,20 Z" />
+
+    <!-- Inner Dark Circle Core -->
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M54,25 C70.02,25 83,37.98 83,54 C83,70.02 70.02,83 54,83 C37.98,83 25,70.02 25,54 C25,37.98 37.98,25 54,25 Z" />
+
+    <!-- Polished Play Triangle -->
+    <path
+        android:fillColor="#00E676"
+        android:pathData="M46,38 C45.2,38 44.5,38.4 44.1,39.1 C43.7,39.8 43.7,40.7 44.1,41.4 L62.1,52.4 C62.9,52.9 62.9,55.1 62.1,55.6 L44.1,66.6 C43.7,67.3 43.7,68.2 44.1,68.9 C44.5,69.6 45.2,70 46,70 C46.4,70 46.8,69.9 47.1,69.7 L69.1,56.2 C69.7,55.8 70.1,55.0 70.1,54.0 C70.1,53.0 69.7,52.2 69.1,51.8 L47.1,38.3 C46.8,38.1 46.4,38 46,38 Z" />
+
+    <!-- Equalizer Soundwaves -->
+    <path
+        android:fillColor="#00E676"
+        android:pathData="M28,48 h3 v12 h-3 z M33,44 h3 v20 h-3 z M72,44 h3 v20 h-3 z M77,48 h3 v12 h-3 z" />
+</vector>
