@@ -747,48 +747,76 @@ fun MainContent(
                     .padding(horizontal = 10.dp, vertical = 2.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Header Banner: stringResource(R.string.app_name) a samostatný řádek s verzí a e-mailem
+                // Ultra-Compact Header Banner
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 6.dp)
+                        .padding(bottom = 2.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(30.dp)
-                                .background(
-                                    brush = Brush.linearGradient(
-                                        colors = listOf(GreenPrimary, Color(0xFF00B0FF))
-                                    ),
-                                    shape = RoundedCornerShape(8.dp)
-                                ),
-                            contentAlignment = Alignment.Center
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Icon(
-                                Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                tint = Color.Black,
-                                modifier = Modifier.size(18.dp)
+                            Box(
+                                modifier = Modifier
+                                    .size(26.dp)
+                                    .background(
+                                        brush = Brush.linearGradient(
+                                            colors = listOf(GreenPrimary, Color(0xFF00B0FF))
+                                        ),
+                                        shape = RoundedCornerShape(7.dp)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.PlayArrow,
+                                    contentDescription = null,
+                                    tint = Color.Black,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                            Text(
+                                text = stringResource(R.string.app_name),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 17.sp,
+                                color = MaterialTheme.colorScheme.onBackground
                             )
+
+                            // "Podpoř mě" Buy Me a Coffee badge right next to Multipřehrávač
+                            Surface(
+                                color = Color(0xFFFFC107).copy(alpha = 0.15f),
+                                shape = RoundedCornerShape(6.dp),
+                                modifier = Modifier.clickable {
+                                    try {
+                                        val intent = Intent(Intent.ACTION_VIEW, "https://buymeacoffee.com/patrikmohler".toUri())
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, context.getString(R.string.cannot_open_link), Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(text = "☕", fontSize = 10.sp)
+                                    Text(
+                                        text = "Podpoř mě",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp,
+                                        color = Color(0xFFFFC107)
+                                    )
+                                }
+                            }
                         }
-                        Text(
-                            text = stringResource(R.string.app_name),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 19.sp,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
 
-                    Spacer(modifier = Modifier.height(3.dp))
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
                         Surface(
                             color = GreenPrimary.copy(alpha = 0.12f),
                             shape = RoundedCornerShape(6.dp)
@@ -797,62 +825,10 @@ fun MainContent(
                                 text = stringResource(R.string.author_contact),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp,
+                                fontSize = 10.sp,
                                 color = GreenPrimary,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
                             )
-                        }
-
-                        // Prominent Language Badge in Header
-                        Surface(
-                            color = GreenPrimary.copy(alpha = 0.15f),
-                            shape = RoundedCornerShape(6.dp),
-                            modifier = Modifier.clickable {
-                                onLanguageChange(if (currentLanguage == "cs") "en" else "cs")
-                            }
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text(text = "🌐", fontSize = 10.sp)
-                                Text(
-                                    text = if (currentLanguage == "cs") "CZ" else "EN",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 11.sp,
-                                    color = GreenPrimary
-                                )
-                            }
-                        }
-
-                        Surface(
-                            color = Color(0xFFFFC107).copy(alpha = 0.15f),
-                            shape = RoundedCornerShape(6.dp),
-                            modifier = Modifier.clickable {
-                                try {
-                                    val intent = Intent(Intent.ACTION_VIEW, "https://buymeacoffee.com/patrikmohler".toUri())
-                                    context.startActivity(intent)
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, context.getString(R.string.cannot_open_link), Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text(text = "☕", fontSize = 10.sp)
-                                Text(
-                                    text = stringResource(R.string.support_development),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 11.sp,
-                                    color = Color(0xFFFFC107)
-                                )
-                            }
                         }
                     }
                 }
@@ -1465,11 +1441,12 @@ fun MainContent(
                     Spacer(modifier = Modifier.height(4.dp))
                 }
 
-                // Embedded Video Player Card
+                // Embedded Video Player Card - Drastically Increased Height & Spacious
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
+                        .weight(1f)
+                        .heightIn(min = 320.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.Black),
                     shape = RoundedCornerShape(18.dp),
                     border = CardDefaults.outlinedCardBorder().copy(
