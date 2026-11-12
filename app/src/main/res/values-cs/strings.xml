@@ -1,0 +1,174 @@
+<resources>
+    <string name="app_name">Multipřehrávač</string>
+    <string name="author_contact">v2.1 • patrik.mohler@gmail.com</string>
+
+    <!-- Header & Search -->
+    <string name="search_youtube">Vyhledat na YouTube</string>
+    <string name="search_caption">Hlasové i textové vyhledávání médií (🎙️)</string>
+    <string name="search_placeholder">Zadejte název videa nebo hudby...</string>
+    <string name="voice_search_desc">Hlasové vyhledávání</string>
+    <string name="search_button_desc">Vyhledat</string>
+    <string name="clear_desc">Vymazat</string>
+    <string name="no_results">Žádné výsledky nenalezeny</string>
+    <string name="search_error">Chyba vyhledávání: %1$s</string>
+    <string name="search_results_title">Výsledky vyhledávání (%1$d)</string>
+    <string name="hide">Skrýt</string>
+
+    <!-- Direct URL -->
+    <string name="play_from_url">Přehrát z URL / Lokální soubor</string>
+    <string name="paste_link">Vložte odkaz</string>
+    <string name="url_placeholder">Vložte URL odkaz (YouTube / MP4)...</string>
+    <string name="play">Přehrát</string>
+    <string name="open">Otevřít</string>
+    <string name="download">Stáhnout</string>
+    <string name="local_file_name">Lokální soubor</string>
+    <string name="enter_url_first">Zadejte nejprve URL adresu videa z internetu</string>
+    <string name="download_started">Spouštím stahování %1$s...</string>
+    <string name="download_success">Soubor úspěšně stažen do složky Stažené soubory!\n(%1$s)</string>
+    <string name="download_error">Chyba stahování: %1$s</string>
+
+    <!-- Player Actions -->
+    <string name="previous">Předchozí</string>
+    <string name="next">Další</string>
+    <string name="quality">Kvalita</string>
+    <string name="ai_subtitles">A.I titulky</string>
+    <string name="subtitles">Titulky</string>
+    <string name="subtitles_lang">Titulky (%1$s)</string>
+    <string name="cast">Odeslat</string>
+
+    <!-- Top App Bar -->
+    <string name="control_bar">Ovládací lišta</string>
+    <string name="history">Historie</string>
+    <string name="help">Nápověda</string>
+    <string name="permissions">Oprávnění</string>
+    <string name="quit">Ukončit</string>
+    <string name="close">Zavřít</string>
+    <string name="cancel">Zrušit</string>
+
+    <!-- Exit Dialog -->
+    <string name="exit_app_title">Ukončit aplikaci?</string>
+    <string name="exit_app_desc">Aplikace zastaví přehrávání na pozadí, ukončí službu a bude kompletně zavřena.</string>
+    <string name="app_exited">Aplikace ukončena</string>
+
+    <!-- History Dialog -->
+    <string name="playback_history">Historie přehrávání</string>
+    <string name="history_empty">Historie je prázdná</string>
+    <string name="delete">Smazat</string>
+    <string name="clear_history">Vymazat historii</string>
+
+    <!-- Quality Dialog -->
+    <string name="playback_quality">Kvalita přehrávání</string>
+    <string name="auto_quality">Automaticky (Nejvyšší dostupná)</string>
+    <string name="quality_1080">1080p Full HD</string>
+    <string name="quality_720">720p HD</string>
+    <string name="quality_480">480p SD</string>
+    <string name="quality_360">360p Úspora dat</string>
+
+    <!-- Download Dialog -->
+    <string name="download_quality">Kvalita stahování</string>
+    <string name="download_quality_desc">Vyberte rozlišení videa nebo datový tok zvuku:</string>
+    <string name="video_1080_title">Video 1080p Full HD (MP4)</string>
+    <string name="video_1080_desc">Nejvyšší kvalita obrazu</string>
+    <string name="video_720_title">Video 720p HD (MP4)</string>
+    <string name="video_720_desc">Vyvážená kvalita a velikost</string>
+    <string name="video_480_title">Video 480p SD (MP4)</string>
+    <string name="video_480_desc">Úspora místa v telefonu</string>
+    <string name="audio_320_title">Zvuk 320 kbps (MP3)</string>
+    <string name="audio_320_desc">Vysoká kvalita zvuku (HQ)</string>
+    <string name="audio_128_title">Zvuk 128 kbps (MP3)</string>
+    <string name="audio_128_desc">Standardní kvalita zvuku</string>
+
+    <!-- Equalizer Dialog -->
+    <string name="equalizer_title">Ekvalizér a Zvukové Efekty</string>
+    <string name="activate_equalizer">Aktivovat ekvalizér</string>
+    <string name="presets">Předvolby zvuku (Presets)</string>
+    <string name="freq_bands">Frekvenční pásma (Equalizer)</string>
+    <string name="bass_boost">Zvýraznění basů (Bass Boost)</string>
+    <string name="loudness_enhancer">Zesilovač tichých videí (Loudness Boost)</string>
+    <string name="equalizer_on">Ekvalizér ON</string>
+
+    <!-- Cast / Share Dialog -->
+    <string name="cast_share_title">Odeslat na TV / Sdílet</string>
+    <string name="active_video">Aktivní video</string>
+    <string name="cast_youtube_title">Odeslat do aplikace YouTube / TV</string>
+    <string name="cast_youtube_desc">Spustí video v aplikaci YouTube pro odeslání na TV</string>
+    <string name="share_link_title">Sdílet odkaz / Odeslat do zařízení</string>
+    <string name="share_link_desc">Otevře systémovou nabídku sdílení pro Smart View a Chromecast</string>
+    <string name="copy_link_title">Zkopírovat odkaz</string>
+    <string name="copy_link_desc">Uloží URL adresu videa do schránky</string>
+    <string name="link_copied">Odkaz zkopírován do schránky</string>
+
+    <!-- Voice & Playlist & Subtitles Messages -->
+    <string name="next_in_queue">Další v pořadí: %1$s</string>
+    <string name="end_of_playlist">Konec seznamu skladeb</string>
+    <string name="previous_track">Předchozí: %1$s</string>
+    <string name="voice_prompt">Řekněte hlasový příkaz (např. \"Přehrát Queen\", \"Další\", \"Pauza\")...</string>
+    <string name="voice_command_recognized">Hlasový příkaz: \"%1$s\"</string>
+    <string name="voice_not_available">Hlasové vyhledávání není na vašem zařízení dostupné</string>
+    <string name="unrecognized_command">Nerozpoznaný příkaz: \"%1$s\"</string>
+    <string name="ai_subs_activated">A.I titulky (Čeština) aktivovány</string>
+    <string name="en_subs_requested">České titulky vyžádány</string>
+    <string name="loading_error">Chyba načítání: %1$s</string>
+    <string name="playing_next_auto">Automaticky přehrávám další: %1$s</string>
+
+    <!-- Permissions -->
+    <string name="permissions_title">Seznam oprávnění</string>
+    <string name="permissions_desc">Přehled systémových oprávnění vyžadovaných aplikací:</string>
+    <string name="perm_internet">Internet (INTERNET)</string>
+    <string name="perm_internet_desc">Pro vyhledávání, načítání streamů a stahování videí/hudby.</string>
+    <string name="perm_notifications">Oznámení (POST_NOTIFICATIONS)</string>
+    <string name="perm_notifications_desc">Pro ovládání přehrávače v notifikační liště na pozadí.</string>
+    <string name="perm_foreground">Služba na popředí</string>
+    <string name="perm_foreground_desc">Pro nepřetržité přehrávání zvuku i při vypnuté obrazovce.</string>
+    <string name="perm_media">Přístup k médiím</string>
+    <string name="perm_media_desc">Pro otevírání lokálních souborů a ukládání stažených videí.</string>
+    <string name="active">Aktivní</string>
+    <string name="allowed">Povoleno</string>
+    <string name="missing">Chybí</string>
+    <string name="allow_notifications">Povolit oznámení</string>
+    <string name="notifications_granted">Oznámení byla úspěšně povolena</string>
+    <string name="notifications_denied">Oznámení nebyla povolena</string>
+
+    <!-- Player Resize -->
+    <string name="resize_fill">Roztáhnout</string>
+    <string name="resize_zoom">Oříznout</string>
+    <string name="resize_fit">Přizpůsobit</string>
+    <string name="orientation_portrait">Portrét</string>
+    <string name="orientation_landscape">Na šířku</string>
+
+    <!-- Support -->
+    <string name="support_development">Podpořit vývoj</string>
+    <string name="buy_me_coffee_title">Podpořit vývoj (Buy Me a Coffee)</string>
+    <string name="buy_me_coffee_desc">Líbí se vám aplikace? Můžete autora podpořit kávou na buymeacoffee.com/patrikmohler</string>
+    <string name="cannot_open_link">Nelze otevřít odkaz</string>
+    <string name="i_understand">Rozumím</string>
+
+    <!-- Help items -->
+    <string name="help_search_title">Vyhledávání médií</string>
+    <string name="help_search_desc">Zadejte název videa nebo skladby do vyhledávacího pole a klepněte na tlačítko Lupa. Výsledky z YouTube se zobrazí v přehledném seznamu.</string>
+    <string name="help_eq_title">Ekvalizér a Zvukové Efekty</string>
+    <string name="help_eq_desc">5-pásmový hardwarový ekvalizér s předvolbami (Rock, Pop, Jazz, Basy...), funkcí Bass Boost pro hluboké basy a Zesilovačem hlasitosti (Loudness Enhancer), který dokáže znatelně zesílit tichá YouTube videa a hudbu.</string>
+    <string name="help_github_title">Stažení z GitHubu</string>
+    <string name="help_github_desc">Zdrojové kódy a připravené balíčky APK (app-release.apk) můžete stáhnout z repozitáře na adrese github.com/PatrikKM/Multiprehravac. Kód lze klonovat pomocí \'git clone\' nebo stáhnout jako ZIP archiv.</string>
+    <string name="help_voice_title">Autonomní Hlasový Agent</string>
+    <string name="help_voice_desc">Klepnutím na ikonu mikrofónu 🎙️ ve vyhledávacím poli můžete dávat hlasové příkazy v češtině (např. \'Přehrát Santana\', \'Další\', \'Pauza\', \'Stáhnout\', \'Kvalita 1080p\', \'Ukončit\'). Agent příkaz automaticky vyhodnotí a vykoná.</string>
+    <string name="help_playlist_title">Automatické přehrávání (Playlist)</string>
+    <string name="help_playlist_desc">Při vyhledání a spuštění skladby se z výsledků vyhledávání vytvoří playlist. Po skončení jedné skladby přehrávače automaticky pokračuje na další. K dispozici jsou tlačítka \'Předchozí\' (⏮) a \'Další\' (⏭).</string>
+    <string name="help_subs_title">Volba titulků</string>
+    <string name="help_subs_desc">U videí s dostupnými titulky klepněte na tlačítko \'Titulky\' nebo zvolte jazyk titulků v nabídce ozubeného kola (např. Čeština, Angličtina) nebo je vypněte.</string>
+    <string name="help_cast_title">Odeslání na TV a sdílení</string>
+    <string name="help_cast_desc">Klepnutím na tlačítko \'Odeslat\' můžete přehrávané video přenést do aplikace YouTube na vaší Smart TV, streamovat přes Chromecast / Smart View nebo sdílet odkaz.</string>
+    <string name="help_history_title">Historie přehrávání</string>
+    <string name="help_history_desc">Klepnutím na ikonu \'Historie\' v horní liště zobrazíte nedávno přehrávané položky. Klepnutím na jakoukoliv položku ji okamžitě znovu přehrajete.</string>
+    <string name="help_local_title">Lokální soubory</string>
+    <string name="help_local_desc">Klepnutím na tlačítko \'Otevřít\' vyberete libovolný audio nebo video soubor uložený v paměti telefonu.</string>
+    <string name="help_download_title">Stahování audia a videa</string>
+    <string name="help_download_desc">Zadejte URL adresu a zvolte \'Stáhnout\'. Můžete vybrat stahování celého videa (MP4) nebo pouze zvukové stopy (MP3). Soubor se uloží do složky Stažené soubory (Downloads).</string>
+    <string name="help_fullscreen_title">Celoobrazovkový režim</string>
+    <string name="help_fullscreen_desc">Během přehrávání přepněte do celoobrazovkového režimu. K dispozici jsou funkce pro titulky, přepínání skladeb, otáčení obrazovky a úpravu poměru stran.</string>
+    <string name="help_bg_title">Přehrávání na pozadí</string>
+    <string name="help_bg_desc">Přehrávač běží jako služba na popředí. Zvuk hraje i po zhasnutí obrazovky nebo při přepnutí do jiné aplikace.</string>
+    <string name="help_quit_title">Ukončení přehrávače</string>
+    <string name="help_quit_desc">Klepnutím na červené tlačítko Vypnout v pravém horním rohu okamžitě zastavíte přehrávání na pozadí, uvolníte paměť, ukončíte službu a zavřete aplikaci.</string>
+
+</resources>

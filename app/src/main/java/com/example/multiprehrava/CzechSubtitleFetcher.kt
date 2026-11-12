@@ -18,17 +18,26 @@ object CzechSubtitleFetcher {
     private const val TAG = "CzechSubtitleFetcher"
     private const val DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
 
-    suspend fun fetchCzechAiSubtitles(urlOrVideoId: String): List<SubtitleLine> = withContext(Dispatchers.IO) {
+    suspend fun fetchCzechAiSubtitles(urlOrVideoId: String, targetLang: String = "cs"): List<SubtitleLine> = withContext(Dispatchers.IO) {
         val videoId = MediaHelper.getVideoId(urlOrVideoId) ?: urlOrVideoId
         if (videoId.isBlank()) return@withContext emptyList()
 
-        val candidateUrls = listOf(
-            "https://www.youtube.com/api/timedtext?v=$videoId&lang=cs&fmt=json3",
-            "https://www.youtube.com/api/timedtext?v=$videoId&kind=asr&lang=en&tlang=cs&fmt=json3",
-            "https://www.youtube.com/api/timedtext?v=$videoId&kind=asr&lang=fr&tlang=cs&fmt=json3",
-            "https://www.youtube.com/api/timedtext?v=$videoId&kind=asr&lang=de&tlang=cs&fmt=json3",
-            "https://www.youtube.com/api/timedtext?v=$videoId&kind=asr&lang=es&tlang=cs&fmt=json3"
-        )
+        val candidateUrls = if (targetLang == "en") {
+            listOf(
+                "https://www.youtube.com/api/timedtext?v=$videoId&lang=en&fmt=json3",
+                "https://www.youtube.com/api/timedtext?v=$videoId&kind=asr&lang=en&fmt=json3",
+                "https://www.youtube.com/api/timedtext?v=$videoId&kind=asr&lang=es&tlang=en&fmt=json3",
+                "https://www.youtube.com/api/timedtext?v=$videoId&kind=asr&lang=fr&tlang=en&fmt=json3"
+            )
+        } else {
+            listOf(
+                "https://www.youtube.com/api/timedtext?v=$videoId&lang=cs&fmt=json3",
+                "https://www.youtube.com/api/timedtext?v=$videoId&kind=asr&lang=en&tlang=cs&fmt=json3",
+                "https://www.youtube.com/api/timedtext?v=$videoId&kind=asr&lang=fr&tlang=cs&fmt=json3",
+                "https://www.youtube.com/api/timedtext?v=$videoId&kind=asr&lang=de&tlang=cs&fmt=json3",
+                "https://www.youtube.com/api/timedtext?v=$videoId&kind=asr&lang=es&tlang=cs&fmt=json3"
+            )
+        }
 
         for (urlStr in candidateUrls) {
             try {
