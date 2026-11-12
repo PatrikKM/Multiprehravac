@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
@@ -44,8 +45,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -80,6 +83,7 @@ import com.example.multiprehrava.ui.theme.TextWhite
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -91,23 +95,36 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             var currentLanguage by remember { mutableStateOf(LanguageManager.getLanguage(context)) }
 
-            LaunchedEffect(currentLanguage) {
-                LanguageManager.setLocale(context, currentLanguage)
+            val localizedContext = remember(currentLanguage) {
+                val locale = Locale(currentLanguage)
+                Locale.setDefault(locale)
+                val config = Configuration(context.resources.configuration)
+                config.setLocale(locale)
+                context.createConfigurationContext(config)
             }
 
-            MultiprehravačTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    MainContent(
-                        currentLanguage = currentLanguage,
-                        onLanguageChange = { newLang ->
-                            currentLanguage = newLang
-                            LanguageManager.saveLanguage(context, newLang)
-                            LanguageManager.setLocale(context, newLang)
-                        }
-                    )
+            val localizedConfiguration = remember(currentLanguage) {
+                localizedContext.resources.configuration
+            }
+
+            CompositionLocalProvider(
+                LocalContext provides localizedContext,
+                LocalConfiguration provides localizedConfiguration
+            ) {
+                MultiprehravačTheme {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        MainContent(
+                            currentLanguage = currentLanguage,
+                            onLanguageChange = { newLang ->
+                                currentLanguage = newLang
+                                LanguageManager.saveLanguage(context, newLang)
+                                LanguageManager.setLocale(context, newLang)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -184,7 +201,7 @@ fun MainContent(
             e.printStackTrace()
         }
 
-        Toast.makeText(context, "Aplikace ukončena", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.app_exited), Toast.LENGTH_SHORT).show()
         (context as? Activity)?.finishAndRemoveTask()
     }
 
@@ -192,9 +209,9 @@ fun MainContent(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            Toast.makeText(context, "Oznámení byla úspěšně povolena", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.notifications_granted), Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(context, "Oznámení nebyla povolena", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.notifications_denied), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -261,7 +278,7 @@ fun MainContent(
                     isFullscreen = true
                 }
             }.onFailure { error ->
-                Toast.makeText(context, "Chyba načítání: ${error.localizedMessage}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, context.getString(R.string.loading_error, error.localizedMessage), Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -283,26 +300,26 @@ fun MainContent(
         if (urlInput.isNotBlank()) {
             isDownloading = true
             val typeText = when (qualitySpec) {
-                "video_1080" -> "videa 1080p (MP4)"
-                "video_720" -> "videa 720p (MP4)"
-                "video_480" -> "videa 480p (MP4)"
-                "audio_320" -> "zvuku 320 kbps (MP3)"
-                else -> "zvuku 128 kbps (MP3)"
+                "video_1080" -> context.getString(R.string.video_1080_title)
+                "video_720" -> context.getString(R.string.video_720_title)
+                "video_480" -> context.getString(R.string.video_480_title)
+                "audio_320" -> context.getString(R.string.audio_320_title)
+                else -> context.getString(R.string.audio_128_title)
             }
-            Toast.makeText(context, "Spouštím stahování $typeText...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.download_started, typeText), Toast.LENGTH_SHORT).show()
             scope.launch {
                 val result = MediaHelper.downloadMedia(context, urlInput.trim(), qualitySpec = qualitySpec) { progress, _ ->
                     downloadProgress = progress
                 }
                 isDownloading = false
                 result.onSuccess { path ->
-                    Toast.makeText(context, "Soubor úspěšně stažen do složky Stažené soubory!\n($path)", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, context.getString(R.string.download_success, path), Toast.LENGTH_LONG).show()
                 }.onFailure { error ->
-                    Toast.makeText(context, "Chyba stahování: ${error.localizedMessage}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, context.getString(R.string.download_error, error.localizedMessage), Toast.LENGTH_LONG).show()
                 }
             }
         } else {
-            Toast.makeText(context, "Zadejte nejprve URL adresu videa z internetu", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.enter_url_first), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -310,7 +327,7 @@ fun MainContent(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let { selectedUri ->
-            val fileName = getFileName(context, selectedUri) ?: "Lokální soubor"
+            val fileName = getFileName(context, selectedUri) ?: context.getString(R.string.local_file_name)
             currentTitle = fileName
             currentSubtitles = emptyList()
             selectedSubtitleLanguage = null
@@ -340,17 +357,17 @@ fun MainContent(
     val playNextTrack: () -> Unit = {
         val next = PlaylistManager.getNextTrack()
         if (next != null) {
-            Toast.makeText(context, "Další v pořadí: ${next.title}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.next_in_queue, next.title), Toast.LENGTH_SHORT).show()
             playTrack(next)
         } else {
-            Toast.makeText(context, "Konec seznamu skladeb", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.end_of_playlist), Toast.LENGTH_SHORT).show()
         }
     }
 
     val playPreviousTrack: () -> Unit = {
         val prev = PlaylistManager.getPreviousTrack()
         if (prev != null) {
-            Toast.makeText(context, "Předchozí: ${prev.title}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.previous_track, prev.title), Toast.LENGTH_SHORT).show()
             playTrack(prev)
         }
     }
@@ -361,7 +378,7 @@ fun MainContent(
         if (result.resultCode == Activity.RESULT_OK) {
             val spokenText = result.data?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
             if (!spokenText.isNullOrBlank()) {
-                Toast.makeText(context, "Hlasový příkaz: \"$spokenText\"", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.voice_command_recognized, spokenText), Toast.LENGTH_SHORT).show()
                 when (val command = VoiceCommandAgent.parseCommand(spokenText)) {
                     is VoiceCommandAgent.CommandResult.SearchAndPlay -> {
                         searchQuery = command.query
@@ -390,7 +407,7 @@ fun MainContent(
                     }
                     is VoiceCommandAgent.CommandResult.ExitApp -> exitAppAction()
                     is VoiceCommandAgent.CommandResult.Unknown -> {
-                        Toast.makeText(context, "Nerozpoznaný příkaz: \"${command.rawText}\"", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.unrecognized_command, command.rawText), Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -406,7 +423,7 @@ fun MainContent(
             }
             speechLauncher.launch(intent)
         } catch (e: Exception) {
-            Toast.makeText(context, "Hlasové vyhledávání není na vašem zařízení dostupné", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.voice_not_available), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -428,7 +445,7 @@ fun MainContent(
                         if (playbackState == Player.STATE_ENDED) {
                             val nextTrack = PlaylistManager.getNextTrack()
                             if (nextTrack != null) {
-                                Toast.makeText(context, "Automaticky přehrávám další: ${nextTrack.title}", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.playing_next_auto, nextTrack.title), Toast.LENGTH_SHORT).show()
                                 playTrack(nextTrack)
                             }
                         }
@@ -568,8 +585,8 @@ fun MainContent(
                     Icon(Icons.Default.PowerSettingsNew, contentDescription = null, tint = MaterialTheme.colorScheme.error)
                 }
             },
-            title = { Text("Ukončit aplikaci?", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
-            text = { Text("Aplikace zastaví přehrávání na pozadí, ukončí službu a bude kompletně zavřena.", style = MaterialTheme.typography.bodyMedium) },
+            title = { Text(stringResource(R.string.exit_app_title), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
+            text = { Text(stringResource(R.string.exit_app_desc), style = MaterialTheme.typography.bodyMedium) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -579,7 +596,7 @@ fun MainContent(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Ukončit")
+                    Text(stringResource(R.string.quit))
                 }
             },
             dismissButton = {
@@ -587,7 +604,7 @@ fun MainContent(
                     onClick = { showExitDialog = false },
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Zrušit")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -643,7 +660,7 @@ fun MainContent(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                "Ovládací lišta",
+                                stringResource(R.string.control_bar),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -682,7 +699,7 @@ fun MainContent(
                                         containerColor = MaterialTheme.colorScheme.surfaceVariant
                                     )
                                 ) {
-                                    Icon(Icons.Default.History, contentDescription = "Historie", tint = GreenPrimary, modifier = Modifier.size(20.dp))
+                                    Icon(Icons.Default.History, contentDescription = stringResource(R.string.history), tint = GreenPrimary, modifier = Modifier.size(20.dp))
                                 }
 
                                 FilledTonalIconButton(
@@ -692,7 +709,7 @@ fun MainContent(
                                         containerColor = MaterialTheme.colorScheme.surfaceVariant
                                     )
                                 ) {
-                                    Icon(Icons.Default.Help, contentDescription = "Nápověda", tint = GreenPrimary, modifier = Modifier.size(20.dp))
+                                    Icon(Icons.Default.Help, contentDescription = stringResource(R.string.help), tint = GreenPrimary, modifier = Modifier.size(20.dp))
                                 }
 
                                 FilledTonalIconButton(
@@ -702,7 +719,7 @@ fun MainContent(
                                         containerColor = MaterialTheme.colorScheme.surfaceVariant
                                     )
                                 ) {
-                                    Icon(Icons.Default.Security, contentDescription = "Oprávnění", tint = GreenPrimary, modifier = Modifier.size(20.dp))
+                                    Icon(Icons.Default.Security, contentDescription = stringResource(R.string.permissions), tint = GreenPrimary, modifier = Modifier.size(20.dp))
                                 }
 
                                 FilledTonalIconButton(
@@ -712,7 +729,7 @@ fun MainContent(
                                         containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
                                     )
                                 ) {
-                                    Icon(Icons.Default.PowerSettingsNew, contentDescription = "Ukončit", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
+                                    Icon(Icons.Default.PowerSettingsNew, contentDescription = stringResource(R.string.quit), tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
                                 }
                             }
                         }
@@ -730,7 +747,7 @@ fun MainContent(
                     .padding(horizontal = 10.dp, vertical = 2.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Header Banner: "Multipřehrávač" a samostatný řádek s verzí a e-mailem
+                // Header Banner: stringResource(R.string.app_name) a samostatný řádek s verzí a e-mailem
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -759,7 +776,7 @@ fun MainContent(
                             )
                         }
                         Text(
-                            text = "Multipřehrávač",
+                            text = stringResource(R.string.app_name),
                             fontWeight = FontWeight.Bold,
                             fontSize = 19.sp,
                             color = MaterialTheme.colorScheme.onBackground
@@ -777,7 +794,7 @@ fun MainContent(
                             shape = RoundedCornerShape(6.dp)
                         ) {
                             Text(
-                                text = "v2.1 • patrik.mohler@gmail.com",
+                                text = stringResource(R.string.author_contact),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 11.sp,
@@ -818,7 +835,7 @@ fun MainContent(
                                     val intent = Intent(Intent.ACTION_VIEW, "https://buymeacoffee.com/patrikmohler".toUri())
                                     context.startActivity(intent)
                                 } catch (e: Exception) {
-                                    Toast.makeText(context, "Nelze otevřít odkaz", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.cannot_open_link), Toast.LENGTH_SHORT).show()
                                 }
                             }
                         ) {
@@ -829,7 +846,7 @@ fun MainContent(
                             ) {
                                 Text(text = "☕", fontSize = 10.sp)
                                 Text(
-                                    text = "Podpořit vývoj",
+                                    text = stringResource(R.string.support_development),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 11.sp,
@@ -869,14 +886,14 @@ fun MainContent(
                             ) {
                                 Icon(Icons.Default.Search, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(14.dp))
                                 Text(
-                                    text = "Vyhledat na YouTube",
+                                    text = stringResource(R.string.search_youtube),
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                             Text(
-                                text = "Hlasové i textové vyhledávání médií (🎙️)",
+                                text = stringResource(R.string.search_caption),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontSize = 10.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -908,7 +925,7 @@ fun MainContent(
                                     Icon(Icons.Default.Search, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(15.dp))
                                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                                         if (searchQuery.isEmpty()) {
-                                            Text("Zadejte název videa nebo hudby...", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text(stringResource(R.string.search_placeholder), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
                                         BasicTextField(
                                             value = searchQuery,
@@ -927,10 +944,10 @@ fun MainContent(
                                                             result.onSuccess { items ->
                                                                 searchResults = items
                                                                 if (items.isEmpty()) {
-                                                                    Toast.makeText(context, "Žádné výsledky nenalezeny", Toast.LENGTH_SHORT).show()
+                                                                    Toast.makeText(context, context.getString(R.string.no_results), Toast.LENGTH_SHORT).show()
                                                                 }
                                                             }.onFailure { error ->
-                                                                Toast.makeText(context, "Chyba vyhledávání: ${error.localizedMessage}", Toast.LENGTH_LONG).show()
+                                                                Toast.makeText(context, context.getString(R.string.search_error, error.localizedMessage), Toast.LENGTH_LONG).show()
                                                             }
                                                         }
                                                     }
@@ -944,7 +961,7 @@ fun MainContent(
                                             onClick = { searchQuery = "" },
                                             modifier = Modifier.size(20.dp)
                                         ) {
-                                            Icon(Icons.Default.Close, contentDescription = "Vymazat", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
+                                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.clear_desc), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
                                         }
                                     }
                                 }
@@ -960,7 +977,7 @@ fun MainContent(
                             ) {
                                 Icon(
                                     Icons.Default.Mic,
-                                    contentDescription = "Hlasové vyhľadávanie",
+                                    contentDescription = stringResource(R.string.voice_search_desc),
                                     tint = GreenPrimary,
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -976,10 +993,10 @@ fun MainContent(
                                             result.onSuccess { items ->
                                                 searchResults = items
                                                 if (items.isEmpty()) {
-                                                    Toast.makeText(context, "Žádné výsledky nenalezeny", Toast.LENGTH_SHORT).show()
+                                                    Toast.makeText(context, context.getString(R.string.no_results), Toast.LENGTH_SHORT).show()
                                                 }
                                             }.onFailure { error ->
-                                                Toast.makeText(context, "Chyba vyhledávání: ${error.localizedMessage}", Toast.LENGTH_LONG).show()
+                                                Toast.makeText(context, context.getString(R.string.search_error, error.localizedMessage), Toast.LENGTH_LONG).show()
                                             }
                                         }
                                     }
@@ -1000,7 +1017,7 @@ fun MainContent(
                                 } else {
                                     Icon(
                                         Icons.Default.Search,
-                                        contentDescription = "Vyhledat",
+                                        contentDescription = stringResource(R.string.search_button_desc),
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -1017,7 +1034,7 @@ fun MainContent(
                                     .padding(top = 2.dp)
                             ) {
                                 Text(
-                                    "Výsledky vyhledávání (${searchResults.size})",
+                                    stringResource(R.string.search_results_title, searchResults.size),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = GreenPrimary
@@ -1027,7 +1044,7 @@ fun MainContent(
                                     contentPadding = PaddingValues(0.dp),
                                     modifier = Modifier.height(24.dp)
                                 ) {
-                                    Text("Skrýt", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(stringResource(R.string.hide), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
 
@@ -1110,7 +1127,7 @@ fun MainContent(
 
                                             Icon(
                                                 Icons.Default.PlayCircleFilled,
-                                                contentDescription = "Spustit",
+                                                contentDescription = stringResource(R.string.play),
                                                 tint = GreenPrimary,
                                                 modifier = Modifier.size(24.dp)
                                             )
@@ -1145,14 +1162,14 @@ fun MainContent(
                             ) {
                                 Icon(Icons.Default.Link, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(13.dp))
                                 Text(
-                                    text = "Přehrát z URL / Lokální soubor",
+                                    text = stringResource(R.string.play_from_url),
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 11.sp,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                             Text(
-                                text = "Vložte odkaz",
+                                text = stringResource(R.string.paste_link),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontSize = 10.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -1184,7 +1201,7 @@ fun MainContent(
                                     Icon(Icons.Default.Link, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(15.dp))
                                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                                         if (urlInput.isEmpty()) {
-                                            Text("Vložte URL odkaz (YouTube / MP4)...", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text(stringResource(R.string.url_placeholder), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
                                         BasicTextField(
                                             value = urlInput,
@@ -1208,7 +1225,7 @@ fun MainContent(
                                             onClick = { urlInput = "" },
                                             modifier = Modifier.size(20.dp)
                                         ) {
-                                            Icon(Icons.Default.Close, contentDescription = "Vymazat", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
+                                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.clear_desc), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
                                         }
                                     }
                                 }
@@ -1238,7 +1255,7 @@ fun MainContent(
                                         modifier = Modifier.size(14.dp)
                                     )
                                     Spacer(modifier = Modifier.width(2.dp))
-                                    Text("Přehrát", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.play), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
 
@@ -1254,7 +1271,7 @@ fun MainContent(
                                     modifier = Modifier.size(14.dp)
                                 )
                                 Spacer(modifier = Modifier.width(2.dp))
-                                Text("Otevřít", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.open), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                             }
 
                             FilledTonalButton(
@@ -1277,7 +1294,7 @@ fun MainContent(
                                         modifier = Modifier.size(14.dp)
                                     )
                                     Spacer(modifier = Modifier.width(2.dp))
-                                    Text("Stáhnout", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.download), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -1336,7 +1353,7 @@ fun MainContent(
                                             onClick = { playPreviousTrack() },
                                             modifier = Modifier.size(28.dp)
                                         ) {
-                                            Icon(Icons.Default.SkipPrevious, contentDescription = "Předchozí", tint = GreenPrimary, modifier = Modifier.size(20.dp))
+                                            Icon(Icons.Default.SkipPrevious, contentDescription = stringResource(R.string.previous), tint = GreenPrimary, modifier = Modifier.size(20.dp))
                                         }
                                     }
 
@@ -1345,7 +1362,7 @@ fun MainContent(
                                             onClick = { playNextTrack() },
                                             modifier = Modifier.size(28.dp)
                                         ) {
-                                            Icon(Icons.Default.SkipNext, contentDescription = "Další", tint = GreenPrimary, modifier = Modifier.size(20.dp))
+                                            Icon(Icons.Default.SkipNext, contentDescription = stringResource(R.string.next), tint = GreenPrimary, modifier = Modifier.size(20.dp))
                                         }
                                     }
                                 }
@@ -1435,7 +1452,7 @@ fun MainContent(
                                 FilterChip(
                                     selected = false,
                                     onClick = { showShareCastDialog = true },
-                                    label = { Text("Odeslat", style = MaterialTheme.typography.labelSmall, fontSize = 11.sp) },
+                                    label = { Text(stringResource(R.string.cast), style = MaterialTheme.typography.labelSmall, fontSize = 11.sp) },
                                     leadingIcon = {
                                         Icon(Icons.Default.Cast, contentDescription = null, modifier = Modifier.size(14.dp), tint = GreenPrimary)
                                     },
@@ -1545,9 +1562,9 @@ private fun selectSubtitleLanguage(context: Context, controller: MediaController
             }
         }
         if (setTarget) {
-            Toast.makeText(context, "A.I titulky (Čeština) aktivovány", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.ai_subs_activated), Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(context, "České titulky vyžádány", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.en_subs_requested), Toast.LENGTH_SHORT).show()
         }
     }
 }
@@ -1636,7 +1653,7 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Icon(Icons.Default.GraphicEq, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(20.dp))
-                                Text("Aktivovat ekvalizér", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                Text(stringResource(R.string.activate_equalizer), fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                             }
                             Switch(
                                 checked = isEnabled,
@@ -1655,7 +1672,7 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                     if (isEnabled) {
                         // Presets Row
                         if (presets.isNotEmpty()) {
-                            Text("Předvolby zvuku (Presets)", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = GreenPrimary)
+                            Text(stringResource(R.string.presets), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = GreenPrimary)
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1679,7 +1696,7 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                         }
 
                         // 5-Band Equalizer Sliders
-                        Text("Frekvenční pásma (Equalizer)", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = GreenPrimary)
+                        Text(stringResource(R.string.freq_bands), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = GreenPrimary)
                         key(dummyStateTrigger) {
                             for (i in 0 until numBands) {
                                 val bandIndex = i.toShort()
@@ -1731,7 +1748,7 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     Icon(Icons.Default.Speaker, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(16.dp))
-                                    Text("Zvýraznění basů (Bass Boost)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.bass_boost), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                                 Text("${(bassBoostValue / 10).toInt()}%", fontSize = 11.sp, color = GreenPrimary, fontWeight = FontWeight.Bold)
                             }
@@ -1758,7 +1775,7 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     Icon(Icons.Default.VolumeUp, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(16.dp))
-                                    Text("Zesilovač tichých videí (Loudness Boost)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.loudness_enhancer), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                                 val loudnessDb = (loudnessValue / 100).toInt()
                                 Text("+$loudnessDb dB", fontSize = 11.sp, color = GreenPrimary, fontWeight = FontWeight.Bold)
@@ -1787,7 +1804,7 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                     modifier = Modifier.align(Alignment.End),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Zavřít")
+                    Text(stringResource(R.string.close))
                 }
             }
         }
@@ -1816,7 +1833,7 @@ fun HistoryDialog(
                 Icon(Icons.Default.History, contentDescription = null, tint = GreenPrimary)
             }
         },
-        title = { Text("Historie přehrávání", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
+        title = { Text(stringResource(R.string.playback_history), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
         text = {
             if (historyItems.isEmpty()) {
                 Box(
@@ -1905,7 +1922,7 @@ fun HistoryDialog(
                                 ) {
                                     Icon(
                                         Icons.Default.Delete,
-                                        contentDescription = "Smazat",
+                                        contentDescription = stringResource(R.string.delete),
                                         tint = MaterialTheme.colorScheme.error,
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -1921,7 +1938,7 @@ fun HistoryDialog(
                 onClick = onDismiss,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Zavřít")
+                Text(stringResource(R.string.close))
             }
         },
         dismissButton = {
@@ -1930,7 +1947,7 @@ fun HistoryDialog(
                     onClick = onClearAll,
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Vymazat historii")
+                    Text(stringResource(R.string.clear_history))
                 }
             }
         }
@@ -1955,7 +1972,7 @@ fun HelpDialog(onDismiss: () -> Unit) {
                 Icon(Icons.Default.Help, contentDescription = null, tint = GreenPrimary)
             }
         },
-        title = { Text("Nápověda k aplikaci", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
+        title = { Text(stringResource(R.string.help), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
         text = {
             Column(
                 modifier = Modifier
@@ -1970,7 +1987,7 @@ fun HelpDialog(onDismiss: () -> Unit) {
                             val intent = Intent(Intent.ACTION_VIEW, "https://buymeacoffee.com/patrikmohler".toUri())
                             context.startActivity(intent)
                         } catch (e: Exception) {
-                            Toast.makeText(context, "Nelze otevřít odkaz", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.cannot_open_link), Toast.LENGTH_SHORT).show()
                         }
                     },
                     colors = CardDefaults.cardColors(containerColor = Color(0xFFFFC107).copy(alpha = 0.15f)),
@@ -1984,9 +2001,9 @@ fun HelpDialog(onDismiss: () -> Unit) {
                     ) {
                         Text("☕", fontSize = 22.sp)
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Podpořit vývoj (Buy Me a Coffee)", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall, color = Color(0xFFFFC107))
+                            Text(stringResource(R.string.buy_me_coffee_title), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall, color = Color(0xFFFFC107))
                             Spacer(modifier = Modifier.height(2.dp))
-                            Text("Líbí se vám aplikace? Můžete autora podpořit kávou na buymeacoffee.com/patrikmohler", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.buy_me_coffee_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Icon(Icons.Default.OpenInNew, contentDescription = null, tint = Color(0xFFFFC107), modifier = Modifier.size(18.dp))
                     }
@@ -1994,68 +2011,68 @@ fun HelpDialog(onDismiss: () -> Unit) {
 
                 HelpItem(
                     icon = Icons.Default.Search,
-                    title = "Vyhledávání médií",
-                    description = "Zadejte název videa nebo skladby do vyhledávacího pole a klepněte na tlačítko Lupa. Výsledky z YouTube se zobrazí v přehledném seznamu."
+                    title = stringResource(R.string.help_search_title),
+                    description = stringResource(R.string.help_search_desc)
                 )
                 HelpItem(
                     icon = Icons.Default.Tune,
-                    title = "Ekvalizér a Zvukové Efekty",
-                    description = "5-pásmový hardwarový ekvalizér s předvolbami (Rock, Pop, Jazz, Basy...), funkcí Bass Boost pro hluboké basy a Zesilovačem hlasitosti (Loudness Enhancer), který dokáže znatelně zesílit tichá YouTube videa a hudbu."
+                    title = stringResource(R.string.help_eq_title),
+                    description = stringResource(R.string.help_eq_desc)
                 )
                 HelpItem(
                     icon = Icons.Default.Code,
-                    title = "Stažení z GitHubu",
-                    description = "Zdrojové kódy a připravené balíčky APK (app-release.apk) můžete stáhnout z repozitáře na adrese github.com/PatrikKM/Multiprehravac. Kód lze klonovat pomocí 'git clone' nebo stáhnout jako ZIP archiv."
+                    title = stringResource(R.string.help_github_title),
+                    description = stringResource(R.string.help_github_desc)
                 )
                 HelpItem(
                     icon = Icons.Default.Mic,
-                    title = "Autonomní Hlasový Agent",
-                    description = "Klepnutím na ikonu mikrofónu 🎙️ ve vyhledávacím poli můžete dávat hlasové příkazy v češtině (např. 'Přehrát Santana', 'Další', 'Pauza', 'Stáhnout', 'Kvalita 1080p', 'Ukončit'). Agent příkaz automaticky vyhodnotí a vykoná."
+                    title = stringResource(R.string.help_voice_title),
+                    description = stringResource(R.string.help_voice_desc)
                 )
                 HelpItem(
                     icon = Icons.Default.SkipNext,
-                    title = "Automatické přehrávání (Playlist)",
+                    title = stringResource(R.string.help_playlist_title),
                     description = "Při vyhledání a spuštění skladby se z výsledků vyhledávání vytvoří playlist. Po skončení jedné skladby přehráváče automaticky pokračuje na další. K dispozici jsou tlačítka 'Předchozí' (⏮) a 'Další' (⏭)."
                 )
                 HelpItem(
                     icon = Icons.Default.ClosedCaption,
-                    title = "Volba titulků",
-                    description = "U videí s dostupnými titulky klepněte na tlačítko 'Titulky' nebo zvolte jazyk titulků v nabídce ozubeného kola (např. Čeština, Angličtina) nebo je vypněte."
+                    title = stringResource(R.string.help_subs_title),
+                    description = stringResource(R.string.help_subs_desc)
                 )
                 HelpItem(
                     icon = Icons.Default.Cast,
-                    title = "Odeslání na TV a sdílení",
-                    description = "Klepnutím na tlačítko 'Odeslat' můžete přehrávané video přenést do aplikace YouTube na vaší Smart TV, streamovat přes Chromecast / Smart View nebo sdílet odkaz."
+                    title = stringResource(R.string.help_cast_title),
+                    description = stringResource(R.string.help_cast_desc)
                 )
                 HelpItem(
                     icon = Icons.Default.History,
-                    title = "Historie přehrávání",
-                    description = "Klepnutím na ikonu 'Historie' v horní liště zobrazíte nedávno přehrávané položky. Klepnutím na jakoukoliv položku ji okamžitě znovu přehrajete."
+                    title = stringResource(R.string.help_history_title),
+                    description = stringResource(R.string.help_history_desc)
                 )
                 HelpItem(
                     icon = Icons.Default.FolderOpen,
-                    title = "Lokální soubory",
-                    description = "Klepnutím na tlačítko 'Otevřít' vyberete libovolný audio nebo video soubor uložený v paměti telefonu."
+                    title = stringResource(R.string.help_local_title),
+                    description = stringResource(R.string.help_local_desc)
                 )
                 HelpItem(
                     icon = Icons.Default.Download,
-                    title = "Stahování audia a videa",
-                    description = "Zadejte URL adresu a zvolte 'Stáhnout'. Můžete vybrat stahování celého videa (MP4) nebo pouze zvukové stopy (MP3). Soubor se uloží do složky Stažené soubory (Downloads)."
+                    title = stringResource(R.string.help_download_title),
+                    description = stringResource(R.string.help_download_desc)
                 )
                 HelpItem(
                     icon = Icons.Default.Fullscreen,
-                    title = "Celoobrazovkový režim",
-                    description = "Během přehrávání přepněte do celoobrazovkového režimu. K dispozici jsou funkce pro titulky, přepínání skladeb, otáčení obrazovky a úpravu poměru stran."
+                    title = stringResource(R.string.help_fullscreen_title),
+                    description = stringResource(R.string.help_fullscreen_desc)
                 )
                 HelpItem(
                     icon = Icons.Default.MusicNote,
-                    title = "Přehrávání na pozadí",
-                    description = "Přehrávač běží jako služba na popředí. Zvuk hraje i po zhasnutí obrazovky nebo při přepnutí do jiné aplikace."
+                    title = stringResource(R.string.help_bg_title),
+                    description = stringResource(R.string.help_bg_desc)
                 )
                 HelpItem(
                     icon = Icons.Default.PowerSettingsNew,
-                    title = "Ukončení přehrávače",
-                    description = "Klepnutím na červené tlačítko Vypnout v pravém horním rohu okamžitě zastavíte přehrávání na pozadí, uvolníte paměť, ukončíte službu a zavřete aplikaci."
+                    title = stringResource(R.string.help_quit_title),
+                    description = stringResource(R.string.help_quit_desc)
                 )
             }
         },
@@ -2064,7 +2081,7 @@ fun HelpDialog(onDismiss: () -> Unit) {
                 onClick = onDismiss,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Rozumím")
+                Text(stringResource(R.string.i_understand));
             }
         }
     )
@@ -2077,11 +2094,11 @@ fun PlaybackQualityDialog(
     onSelectQuality: (String) -> Unit
 ) {
     val qualities = listOf(
-        "auto" to "Automaticky (Nejvyšší dostupná)",
-        "1080" to "1080p Full HD",
-        "720" to "720p HD",
-        "480" to "480p SD",
-        "360" to "360p Úspora dat"
+        "auto" to stringResource(R.string.auto_quality),
+        "1080" to stringResource(R.string.quality_1080),
+        "720" to stringResource(R.string.quality_720),
+        "480" to stringResource(R.string.quality_480),
+        "360" to stringResource(R.string.quality_360)
     )
 
     AlertDialog(
@@ -2098,7 +2115,7 @@ fun PlaybackQualityDialog(
                 Icon(Icons.Default.HighQuality, contentDescription = null, tint = GreenPrimary)
             }
         },
-        title = { Text("Kvalita přehrávání", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
+        title = { Text(stringResource(R.string.playback_quality), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
         text = {
             Column(
                 modifier = Modifier
@@ -2136,7 +2153,7 @@ fun PlaybackQualityDialog(
                 onClick = onDismiss,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Zavřít")
+                Text(stringResource(R.string.close))
             }
         }
     )
@@ -2161,7 +2178,7 @@ fun DownloadQualityDialog(
                 Icon(Icons.Default.Download, contentDescription = null, tint = GreenPrimary)
             }
         },
-        title = { Text("Kvalita stahování", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
+        title = { Text(stringResource(R.string.download_quality), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
         text = {
             Column(
                 modifier = Modifier
@@ -2169,7 +2186,7 @@ fun DownloadQualityDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Vyberte rozlišení videa nebo datový tok zvuku:", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.download_quality_desc), style = MaterialTheme.typography.bodyMedium)
 
                 // Video 1080p
                 Card(
@@ -2182,8 +2199,8 @@ fun DownloadQualityDialog(
                         Icon(Icons.Default.Movie, contentDescription = null, tint = GreenPrimary)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text("Video 1080p Full HD (MP4)", fontWeight = FontWeight.SemiBold)
-                            Text("Nejvyšší kvalita obrazu", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.video_1080_title), fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.video_1080_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -2199,8 +2216,8 @@ fun DownloadQualityDialog(
                         Icon(Icons.Default.Movie, contentDescription = null, tint = GreenPrimary)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text("Video 720p HD (MP4)", fontWeight = FontWeight.SemiBold)
-                            Text("Vyvážená kvalita a velikost", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.video_720_title), fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.video_720_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -2216,8 +2233,8 @@ fun DownloadQualityDialog(
                         Icon(Icons.Default.Movie, contentDescription = null, tint = GreenPrimary)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text("Video 480p SD (MP4)", fontWeight = FontWeight.SemiBold)
-                            Text("Úspora místa v telefonu", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.video_480_title), fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.video_480_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -2233,8 +2250,8 @@ fun DownloadQualityDialog(
                         Icon(Icons.Default.MusicNote, contentDescription = null, tint = GreenPrimary)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text("Zvuk 320 kbps (MP3)", fontWeight = FontWeight.SemiBold)
-                            Text("Vysoká kvalita zvuku (HQ)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.audio_320_title), fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.audio_320_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -2250,8 +2267,8 @@ fun DownloadQualityDialog(
                         Icon(Icons.Default.MusicNote, contentDescription = null, tint = GreenPrimary)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text("Zvuk 128 kbps (MP3)", fontWeight = FontWeight.SemiBold)
-                            Text("Standardní kvalita zvuku", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.audio_128_title), fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.audio_128_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -2262,7 +2279,7 @@ fun DownloadQualityDialog(
                 onClick = onDismiss,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Zrušit")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
@@ -2290,7 +2307,7 @@ fun ShareCastDialog(
                 Icon(Icons.Default.Cast, contentDescription = null, tint = GreenPrimary)
             }
         },
-        title = { Text("Odeslat na TV / Sdílet", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
+        title = { Text(stringResource(R.string.cast_share_title), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
         text = {
             Column(
                 modifier = Modifier
@@ -2299,7 +2316,7 @@ fun ShareCastDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
-                    text = title.ifBlank { "Aktivní video" },
+                    text = title.ifBlank { stringResource(R.string.active_video) },
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 2,
@@ -2342,7 +2359,7 @@ fun ShareCastDialog(
                     ) {
                         Icon(Icons.Default.Tv, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(24.dp))
                         Column {
-                            Text("Odeslat do aplikace YouTube / TV", fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.cast_youtube_title), fontWeight = FontWeight.SemiBold)
                             Text(
                                 "Spustí video v aplikaci YouTube pro odeslání na TV",
                                 style = MaterialTheme.typography.bodySmall,
@@ -2360,7 +2377,7 @@ fun ShareCastDialog(
                             putExtra(Intent.EXTRA_SUBJECT, title)
                             putExtra(Intent.EXTRA_TEXT, "$title\n$url")
                         }
-                        context.startActivity(Intent.createChooser(shareIntent, "Sdílet video / Odeslat na TV"))
+                        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share_link_title)))
                         onDismiss()
                     },
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -2374,7 +2391,7 @@ fun ShareCastDialog(
                     ) {
                         Icon(Icons.Default.Share, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(24.dp))
                         Column {
-                            Text("Sdílet odkaz / Odeslat do zařízení", fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.share_link_title), fontWeight = FontWeight.SemiBold)
                             Text(
                                 "Otevře systémovou nabídku sdílení pro Smart View a Chromecast",
                                 style = MaterialTheme.typography.bodySmall,
@@ -2390,7 +2407,7 @@ fun ShareCastDialog(
                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                         val clip = android.content.ClipData.newPlainText("URL videa", url)
                         clipboard.setPrimaryClip(clip)
-                        Toast.makeText(context, "Odkaz zkopírován do schránky", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.link_copied), Toast.LENGTH_SHORT).show()
                         onDismiss()
                     },
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -2404,7 +2421,7 @@ fun ShareCastDialog(
                     ) {
                         Icon(Icons.Default.ContentCopy, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(24.dp))
                         Column {
-                            Text("Zkopírovat odkaz", fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.copy_link_title), fontWeight = FontWeight.SemiBold)
                             Text(
                                 "Uloží URL adresu videa do schránky",
                                 style = MaterialTheme.typography.bodySmall,
@@ -2420,7 +2437,7 @@ fun ShareCastDialog(
                 onClick = onDismiss,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Zavřít")
+                Text(stringResource(R.string.close))
             }
         }
     )
@@ -2478,7 +2495,7 @@ fun PermissionsDialog(
                 Icon(Icons.Default.Security, contentDescription = null, tint = GreenPrimary)
             }
         },
-        title = { Text("Seznam oprávnění", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
+        title = { Text(stringResource(R.string.permissions_title), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
         text = {
             Column(
                 modifier = Modifier
@@ -2493,34 +2510,34 @@ fun PermissionsDialog(
 
                 PermissionItem(
                     icon = Icons.Default.Wifi,
-                    title = "Internet (INTERNET)",
-                    status = "Aktivní",
+                    title = stringResource(R.string.perm_internet),
+                    status = stringResource(R.string.active),
                     isGranted = true,
-                    description = "Pro vyhledávání, načítání streamů a stahování videí/hudby."
+                    description = stringResource(R.string.perm_internet_desc)
                 )
 
                 PermissionItem(
                     icon = Icons.Default.Notifications,
-                    title = "Oznámení (POST_NOTIFICATIONS)",
-                    status = if (hasNotificationPermission) "Povoleno" else "Chybí",
+                    title = stringResource(R.string.perm_notifications),
+                    status = if (hasNotificationPermission) stringResource(R.string.allowed) else stringResource(R.string.missing),
                     isGranted = hasNotificationPermission,
-                    description = "Pro ovládání přehrávače v notifikační liště na pozadí."
+                    description = stringResource(R.string.perm_notifications_desc)
                 )
 
                 PermissionItem(
                     icon = Icons.Default.PlayCircle,
-                    title = "Služba na popředí",
-                    status = "Aktivní",
+                    title = stringResource(R.string.perm_foreground),
+                    status = stringResource(R.string.active),
                     isGranted = true,
-                    description = "Pro nepřetržité přehrávání zvuku i při vypnuté obrazovce."
+                    description = stringResource(R.string.perm_foreground_desc)
                 )
 
                 PermissionItem(
                     icon = Icons.Default.Folder,
-                    title = "Přístup k médiím",
-                    status = "Aktivní",
+                    title = stringResource(R.string.perm_media),
+                    status = stringResource(R.string.active),
                     isGranted = true,
-                    description = "Pro otevírání lokálních souborů a ukládání stažených videí."
+                    description = stringResource(R.string.perm_media_desc)
                 )
             }
         },
@@ -2529,7 +2546,7 @@ fun PermissionsDialog(
                 onClick = onDismiss,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Zavřít")
+                Text(stringResource(R.string.close))
             }
         },
         dismissButton = {
@@ -2538,7 +2555,7 @@ fun PermissionsDialog(
                     onClick = onRequestNotificationPermission,
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Povolit oznámení")
+                    Text(stringResource(R.string.allow_notifications))
                 }
             }
         }
@@ -2712,7 +2729,7 @@ fun FullscreenPlayer(
                         ) {
                             Icon(Icons.Default.SkipPrevious, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Předchozí")
+                            Text(stringResource(R.string.previous))
                         }
                     }
 
@@ -2727,7 +2744,7 @@ fun FullscreenPlayer(
                         ) {
                             Icon(Icons.Default.SkipNext, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Další")
+                            Text(stringResource(R.string.next))
                         }
                     }
 
@@ -2742,7 +2759,7 @@ fun FullscreenPlayer(
                     ) {
                         Icon(Icons.Default.HighQuality, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(if (selectedPlaybackQuality != "auto") "${selectedPlaybackQuality}p" else "Kvalita")
+                        Text(if (selectedPlaybackQuality != "auto") "${selectedPlaybackQuality}p" else stringResource(R.string.quality))
                     }
 
                     // 2. Equalizer Button
@@ -2756,7 +2773,7 @@ fun FullscreenPlayer(
                     ) {
                         Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Ekvalizér")
+                        Text(stringResource(R.string.help_eq_title).split(" ").first())
                     }
 
                     // 3. A.I titulky Button (ALWAYS VISIBLE)
@@ -2770,7 +2787,7 @@ fun FullscreenPlayer(
                     ) {
                         Icon(Icons.Default.ClosedCaption, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("A.I titulky", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.ai_subtitles), fontWeight = FontWeight.Bold)
                     }
 
                     // 4. CC Subtitles
@@ -2785,7 +2802,7 @@ fun FullscreenPlayer(
                         ) {
                             Icon(Icons.Default.ClosedCaption, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Titulky")
+                            Text(stringResource(R.string.subtitles))
                         }
                     }
 
@@ -2799,7 +2816,7 @@ fun FullscreenPlayer(
                     ) {
                         Icon(Icons.Default.Cast, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Odeslat")
+                        Text(stringResource(R.string.cast))
                     }
 
                     // Download Button
@@ -2813,7 +2830,7 @@ fun FullscreenPlayer(
                     ) {
                         Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Stáhnout")
+                        Text(stringResource(R.string.download))
                     }
 
                     // Aspect ratio / Fill toggle (VLC style)
@@ -2834,9 +2851,9 @@ fun FullscreenPlayer(
                         Icon(Icons.Default.AspectRatio, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
                         Spacer(modifier = Modifier.width(4.dp))
                         val text = when (resizeMode) {
-                            AspectRatioFrameLayout.RESIZE_MODE_FILL -> "Roztáhnout"
-                            AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> "Oříznout"
-                            else -> "Přizpůsobit"
+                            AspectRatioFrameLayout.RESIZE_MODE_FILL -> stringResource(R.string.resize_fill)
+                            AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> stringResource(R.string.resize_zoom)
+                            else -> stringResource(R.string.resize_fit)
                         }
                         Text(text)
                     }
@@ -2852,7 +2869,7 @@ fun FullscreenPlayer(
                     ) {
                         Icon(Icons.Default.ScreenRotation, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(if (isLandscape) "Portrét" else "Na šířku")
+                        Text(if (isLandscape) stringResource(R.string.orientation_portrait) else stringResource(R.string.orientation_landscape))
                     }
                 }
             }
