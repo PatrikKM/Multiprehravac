@@ -722,20 +722,53 @@ fun MainContent() {
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(3.dp))
 
-                    Surface(
-                        color = GreenPrimary.copy(alpha = 0.12f),
-                        shape = RoundedCornerShape(6.dp)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "v2.1 • patrik.mohler@gmail.com",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp,
-                            color = GreenPrimary,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
+                        Surface(
+                            color = GreenPrimary.copy(alpha = 0.12f),
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Text(
+                                text = "v2.1 • patrik.mohler@gmail.com",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp,
+                                color = GreenPrimary,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+
+                        Surface(
+                            color = Color(0xFFFFC107).copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(6.dp),
+                            modifier = Modifier.clickable {
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW, "https://buymeacoffee.com/patrikmohler".toUri())
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Nelze otevřít odkaz", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(text = "☕", fontSize = 10.sp)
+                                Text(
+                                    text = "Podpořit vývoj",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.sp,
+                                    color = Color(0xFFFFC107)
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -1838,6 +1871,8 @@ fun HistoryDialog(
 
 @Composable
 fun HelpDialog(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(24.dp),
@@ -1860,6 +1895,35 @@ fun HelpDialog(onDismiss: () -> Unit) {
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Buy Me a Coffee Support Card
+                Card(
+                    onClick = {
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, "https://buymeacoffee.com/patrikmohler".toUri())
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Nelze otevřít odkaz", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFC107).copy(alpha = 0.15f)),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text("☕", fontSize = 22.sp)
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Podpořit vývoj (Buy Me a Coffee)", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall, color = Color(0xFFFFC107))
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text("Líbí se vám aplikace? Můžete autora podpořit kávou na buymeacoffee.com/patrikmohler", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Icon(Icons.Default.OpenInNew, contentDescription = null, tint = Color(0xFFFFC107), modifier = Modifier.size(18.dp))
+                    }
+                }
+
                 HelpItem(
                     icon = Icons.Default.Search,
                     title = "Vyhledávání médií",
