@@ -84,13 +84,30 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        LanguageManager.init(this)
+
         setContent {
+            val context = LocalContext.current
+            var currentLanguage by remember { mutableStateOf(LanguageManager.getLanguage(context)) }
+
+            LaunchedEffect(currentLanguage) {
+                LanguageManager.setLocale(context, currentLanguage)
+            }
+
             MultiprehravačTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainContent()
+                    MainContent(
+                        currentLanguage = currentLanguage,
+                        onLanguageChange = { newLang ->
+                            currentLanguage = newLang
+                            LanguageManager.saveLanguage(context, newLang)
+                            LanguageManager.setLocale(context, newLang)
+                        }
+                    )
                 }
             }
         }
@@ -99,7 +116,10 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(UnstableApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun MainContent() {
+fun MainContent(
+    currentLanguage: String,
+    onLanguageChange: (String) -> Unit
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -627,7 +647,31 @@ fun MainContent() {
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Prominent Language Toggle Button in TopAppBar
+                                Surface(
+                                    color = GreenPrimary.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.clickable {
+                                        onLanguageChange(if (currentLanguage == "cs") "en" else "cs")
+                                    }
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+                                    ) {
+                                        Text(
+                                            text = if (currentLanguage == "cs") "CZ" else "EN",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            color = GreenPrimary
+                                        )
+                                    }
+                                }
                                 FilledTonalIconButton(
                                     onClick = {
                                         historyItems = HistoryManager.getHistory(context)
@@ -740,6 +784,30 @@ fun MainContent() {
                                 color = GreenPrimary,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
+                        }
+
+                        // Prominent Language Badge in Header
+                        Surface(
+                            color = GreenPrimary.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(6.dp),
+                            modifier = Modifier.clickable {
+                                onLanguageChange(if (currentLanguage == "cs") "en" else "cs")
+                            }
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(text = "🌐", fontSize = 10.sp)
+                                Text(
+                                    text = if (currentLanguage == "cs") "CZ" else "EN",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.sp,
+                                    color = GreenPrimary
+                                )
+                            }
                         }
 
                         Surface(
