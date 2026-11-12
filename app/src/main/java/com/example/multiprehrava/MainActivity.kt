@@ -648,7 +648,7 @@ fun MainContent() {
                                         containerColor = MaterialTheme.colorScheme.surfaceVariant
                                     )
                                 ) {
-                                    Icon(Icons.Default.Info, contentDescription = "Nápověda", tint = GreenPrimary, modifier = Modifier.size(20.dp))
+                                    Icon(Icons.Default.Help, contentDescription = "Nápověda", tint = GreenPrimary, modifier = Modifier.size(20.dp))
                                 }
 
                                 FilledTonalIconButton(
@@ -1849,7 +1849,7 @@ fun HelpDialog(onDismiss: () -> Unit) {
                     .background(GreenPrimary.copy(alpha = 0.15f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Info, contentDescription = null, tint = GreenPrimary)
+                Icon(Icons.Default.Help, contentDescription = null, tint = GreenPrimary)
             }
         },
         title = { Text("Nápověda k aplikaci", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
@@ -1871,6 +1871,11 @@ fun HelpDialog(onDismiss: () -> Unit) {
                     description = "5-pásmový hardwarový ekvalizér s předvolbami (Rock, Pop, Jazz, Basy...), funkcí Bass Boost pro hluboké basy a Zesilovačem hlasitosti (Loudness Enhancer), který dokáže znatelně zesílit tichá YouTube videa a hudbu."
                 )
                 HelpItem(
+                    icon = Icons.Default.Code,
+                    title = "Stažení z GitHubu",
+                    description = "Zdrojové kódy a připravené balíčky APK (app-release.apk) můžete stáhnout z repozitáře na adrese github.com/PatrikKM/Multiprehravac. Kód lze klonovat pomocí 'git clone' nebo stáhnout jako ZIP archiv."
+                )
+                HelpItem(
                     icon = Icons.Default.Mic,
                     title = "Autonomní Hlasový Agent",
                     description = "Klepnutím na ikonu mikrofónu 🎙️ ve vyhledávacím poli můžete dávat hlasové příkazy v češtině (např. 'Přehrát Santana', 'Další', 'Pauza', 'Stáhnout', 'Kvalita 1080p', 'Ukončit'). Agent příkaz automaticky vyhodnotí a vykoná."
@@ -1878,7 +1883,7 @@ fun HelpDialog(onDismiss: () -> Unit) {
                 HelpItem(
                     icon = Icons.Default.SkipNext,
                     title = "Automatické přehrávání (Playlist)",
-                    description = "Při vyhledání a spuštění skladby se z výsledků vyhledávání vytvoří playlist. Po skončení jedné skladby přehrávač automaticky pokračuje na další. K dispozici jsou tlačítka 'Předchozí' (⏮) a 'Další' (⏭)."
+                    description = "Při vyhledání a spuštění skladby se z výsledků vyhledávání vytvoří playlist. Po skončení jedné skladby přehráváče automaticky pokračuje na další. K dispozici jsou tlačítka 'Předchozí' (⏮) a 'Další' (⏭)."
                 )
                 HelpItem(
                     icon = Icons.Default.ClosedCaption,
