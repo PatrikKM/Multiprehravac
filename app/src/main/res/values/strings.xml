@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Multiplayer</string>
-    <string name="author_contact">v2.1 • patrik.mohler@gmail.com</string>
+    <string name="support_me">Support me</string>
 
     <!-- Header & Search -->
     <string name="search_youtube">Search on YouTube</string>

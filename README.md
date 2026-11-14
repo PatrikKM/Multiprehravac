@@ -1,4 +1,4 @@
-# 🎬 Multipřehrávač v2.1
+# 🎬 Multipřehrávač v2.2
 
 ![Android](https://img.shields.io/badge/Android-Media3%20ExoPlayer-00E676?style=for-the-badge&logo=android)
 ![Kotlin](https://img.shields.io/badge/Kotlin-Jetpack%20Compose-7F52FF?style=for-the-badge&logo=kotlin)
@@ -30,7 +30,7 @@ Aplikace přináší prémiový **Dark Cyber Slate** design, 5-pásmový hardwar
 ### 🎨 4. Ultra-Kompaktní Cyber Slate UI
 - **Výška zadávacích polí 36.dp** zarovnaná do jedné čitelné línie s tlačítky *Přehrát*, *Otevřít* a *Stáhnout*.
 - **Výrazný tučný lemovací rámček (`2.dp GreenPrimary`)** a tmavé terminálové pozadí (`#0F141C`) pro okamžité odlišení vstupních polí.
-- **Samostatný řádek s verzí a kontaktem**: `v2.1 • patrik.mohler@gmail.com`.
+- **Kompaktní záhlaví pod ovládací lištou**: Název aplikace a odkaz *Podpoř mě* pod ovládací lištou, bez rušivých údajů na obrazovce přehrávače (aktuální verze `v2.2`).
 
 ### 📺 5. Přehrávač & Streamovací Engine
 - **Media3 ExoPlayer** + **MediaSessionService** (služba na popředí s ovládáním v notifikační liště a přehráváním při zhasnuté obrazovce).

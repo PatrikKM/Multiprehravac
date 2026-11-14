@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -95,21 +96,21 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             var currentLanguage by remember { mutableStateOf(LanguageManager.getLanguage(context)) }
 
-            val localizedContext = remember(currentLanguage) {
+            val localizedResources = remember(currentLanguage) {
                 val locale = Locale(currentLanguage)
                 Locale.setDefault(locale)
                 val config = Configuration(context.resources.configuration)
                 config.setLocale(locale)
-                context.createConfigurationContext(config)
+                context.createConfigurationContext(config).resources
             }
 
             val localizedConfiguration = remember(currentLanguage) {
-                localizedContext.resources.configuration
+                localizedResources.configuration
             }
 
             CompositionLocalProvider(
-                LocalContext provides localizedContext,
-                LocalConfiguration provides localizedConfiguration
+                LocalConfiguration provides localizedConfiguration,
+                LocalResources provides localizedResources
             ) {
                 MultiprehravačTheme {
                     Surface(
@@ -661,7 +662,8 @@ fun MainContent(
                         ) {
                             Text(
                                 stringResource(R.string.control_bar),
-                                style = MaterialTheme.typography.labelMedium,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontSize = 13.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Row(
@@ -684,7 +686,7 @@ fun MainContent(
                                         Text(
                                             text = if (currentLanguage == "cs") "CZ" else "EN",
                                             fontWeight = FontWeight.Bold,
-                                            fontSize = 12.sp,
+                                            fontSize = 13.sp,
                                             color = GreenPrimary
                                         )
                                     }
@@ -747,87 +749,69 @@ fun MainContent(
                     .padding(horizontal = 10.dp, vertical = 2.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Ultra-Compact Header Banner
-                Column(
+                // Compact Header Banner below Control Bar (App name + Support badge only)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 2.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(26.dp)
+                                .background(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(GreenPrimary, Color(0xFF00B0FF))
+                                    ),
+                                    shape = RoundedCornerShape(7.dp)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                tint = Color.Black,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Text(
+                            text = stringResource(R.string.app_name),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+
+                    // "Podpoř mě" Buy Me a Coffee badge under Control Bar
+                    Surface(
+                        color = Color(0xFFFFC107).copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.clickable {
+                            try {
+                                val intent = Intent(Intent.ACTION_VIEW, "https://buymeacoffee.com/patrikmohler".toUri())
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                Toast.makeText(context, context.getString(R.string.cannot_open_link), Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(26.dp)
-                                    .background(
-                                        brush = Brush.linearGradient(
-                                            colors = listOf(GreenPrimary, Color(0xFF00B0FF))
-                                        ),
-                                        shape = RoundedCornerShape(7.dp)
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    Icons.Default.PlayArrow,
-                                    contentDescription = null,
-                                    tint = Color.Black,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
+                            Text(text = "☕", fontSize = 12.sp)
                             Text(
-                                text = stringResource(R.string.app_name),
+                                text = stringResource(R.string.support_me),
+                                style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 17.sp,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-
-                            // "Podpoř mě" Buy Me a Coffee badge right next to Multipřehrávač
-                            Surface(
-                                color = Color(0xFFFFC107).copy(alpha = 0.15f),
-                                shape = RoundedCornerShape(6.dp),
-                                modifier = Modifier.clickable {
-                                    try {
-                                        val intent = Intent(Intent.ACTION_VIEW, "https://buymeacoffee.com/patrikmohler".toUri())
-                                        context.startActivity(intent)
-                                    } catch (e: Exception) {
-                                        Toast.makeText(context, context.getString(R.string.cannot_open_link), Toast.LENGTH_SHORT).show()
-                                    }
-                                }
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(3.dp),
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(text = "☕", fontSize = 10.sp)
-                                    Text(
-                                        text = "Podpoř mě",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 11.sp,
-                                        color = Color(0xFFFFC107)
-                                    )
-                                }
-                            }
-                        }
-
-                        Surface(
-                            color = GreenPrimary.copy(alpha = 0.12f),
-                            shape = RoundedCornerShape(6.dp)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.author_contact),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 10.sp,
-                                color = GreenPrimary,
-                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                fontSize = 12.sp,
+                                color = Color(0xFFFFC107)
                             )
                         }
                     }
@@ -864,14 +848,14 @@ fun MainContent(
                                 Text(
                                     text = stringResource(R.string.search_youtube),
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp,
+                                    fontSize = 13.sp,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                             Text(
                                 text = stringResource(R.string.search_caption),
                                 style = MaterialTheme.typography.labelSmall,
-                                fontSize = 10.sp,
+                                fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -884,7 +868,7 @@ fun MainContent(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(36.dp)
+                                    .height(38.dp)
                                     .background(Color(0xFF0F141C), RoundedCornerShape(8.dp))
                                     .border(
                                         width = 2.dp,
@@ -898,16 +882,16 @@ fun MainContent(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Icon(Icons.Default.Search, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(15.dp))
+                                    Icon(Icons.Default.Search, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(16.dp))
                                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                                         if (searchQuery.isEmpty()) {
-                                            Text(stringResource(R.string.search_placeholder), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text(stringResource(R.string.search_placeholder), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
                                         BasicTextField(
                                             value = searchQuery,
                                             onValueChange = { searchQuery = it },
                                             singleLine = true,
-                                            textStyle = TextStyle(color = TextWhite, fontSize = 12.sp, fontWeight = FontWeight.Medium),
+                                            textStyle = TextStyle(color = TextWhite, fontSize = 13.sp, fontWeight = FontWeight.Medium),
                                             cursorBrush = SolidColor(GreenPrimary),
                                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                                             keyboardActions = KeyboardActions(
@@ -1087,14 +1071,14 @@ fun MainContent(
                                                     text = item.title,
                                                     style = MaterialTheme.typography.titleSmall,
                                                     fontWeight = FontWeight.SemiBold,
-                                                    fontSize = 12.sp,
+                                                    fontSize = 14.sp,
                                                     maxLines = 2,
                                                     overflow = TextOverflow.Ellipsis
                                                 )
                                                 Text(
                                                     text = item.uploader.ifBlank { "YouTube" },
                                                     style = MaterialTheme.typography.bodySmall,
-                                                    fontSize = 11.sp,
+                                                    fontSize = 12.sp,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     maxLines = 1,
                                                     overflow = TextOverflow.Ellipsis
@@ -1140,14 +1124,14 @@ fun MainContent(
                                 Text(
                                     text = stringResource(R.string.play_from_url),
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 11.sp,
+                                    fontSize = 13.sp,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                             Text(
                                 text = stringResource(R.string.paste_link),
                                 style = MaterialTheme.typography.labelSmall,
-                                fontSize = 10.sp,
+                                fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -1159,8 +1143,8 @@ fun MainContent(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .weight(1.3f)
-                                    .height(36.dp)
+                                    .weight(1.1f)
+                                    .height(38.dp)
                                     .background(Color(0xFF0F141C), RoundedCornerShape(8.dp))
                                     .border(
                                         width = 2.dp,
@@ -1177,13 +1161,13 @@ fun MainContent(
                                     Icon(Icons.Default.Link, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(15.dp))
                                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                                         if (urlInput.isEmpty()) {
-                                            Text(stringResource(R.string.url_placeholder), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text(stringResource(R.string.url_placeholder), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
                                         BasicTextField(
                                             value = urlInput,
                                             onValueChange = { urlInput = it },
                                             singleLine = true,
-                                            textStyle = TextStyle(color = TextWhite, fontSize = 11.sp, fontWeight = FontWeight.Medium),
+                                            textStyle = TextStyle(color = TextWhite, fontSize = 13.sp, fontWeight = FontWeight.Medium),
                                             cursorBrush = SolidColor(GreenPrimary),
                                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                             keyboardActions = KeyboardActions(
@@ -1231,13 +1215,13 @@ fun MainContent(
                                         modifier = Modifier.size(14.dp)
                                     )
                                     Spacer(modifier = Modifier.width(2.dp))
-                                    Text(stringResource(R.string.play), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.play), fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                                 }
                             }
 
                             OutlinedButton(
                                 onClick = { filePickerLauncher.launch("*/*") },
-                                modifier = Modifier.height(36.dp),
+                                modifier = Modifier.height(38.dp),
                                 shape = RoundedCornerShape(8.dp),
                                 contentPadding = PaddingValues(horizontal = 6.dp)
                             ) {
@@ -1247,20 +1231,20 @@ fun MainContent(
                                     modifier = Modifier.size(14.dp)
                                 )
                                 Spacer(modifier = Modifier.width(2.dp))
-                                Text(stringResource(R.string.open), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.open), fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                             }
 
                             FilledTonalButton(
                                 onClick = { showDownloadDialog = true },
                                 enabled = !isDownloading && urlInput.isNotBlank(),
-                                modifier = Modifier.height(36.dp),
+                                modifier = Modifier.height(38.dp),
                                 shape = RoundedCornerShape(8.dp),
                                 contentPadding = PaddingValues(horizontal = 6.dp)
                             ) {
                                 if (isDownloading) {
                                     Text(
                                         "${downloadProgress.toInt()}%",
-                                        fontSize = 10.sp,
+                                        fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                 } else {
@@ -1270,7 +1254,7 @@ fun MainContent(
                                         modifier = Modifier.size(14.dp)
                                     )
                                     Spacer(modifier = Modifier.width(2.dp))
-                                    Text(stringResource(R.string.download), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.download), fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                                 }
                             }
                         }
@@ -1313,7 +1297,7 @@ fun MainContent(
                                         text = currentTitle,
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 13.sp,
+                                        fontSize = 14.sp,
                                         color = MaterialTheme.colorScheme.onSurface,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
@@ -1358,13 +1342,13 @@ fun MainContent(
                                     onClick = { showQualityDialog = true },
                                     label = {
                                         Text(
-                                            if (selectedPlaybackQuality != "auto") "${selectedPlaybackQuality}p" else "Kvalita",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontSize = 11.sp
+                                            if (selectedPlaybackQuality != "auto") "${selectedPlaybackQuality}p" else stringResource(R.string.quality),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontSize = 13.sp
                                         )
                                     },
                                     leadingIcon = {
-                                        Icon(Icons.Default.HighQuality, contentDescription = null, modifier = Modifier.size(14.dp), tint = GreenPrimary)
+                                        Icon(Icons.Default.HighQuality, contentDescription = null, modifier = Modifier.size(16.dp), tint = GreenPrimary)
                                     },
                                     shape = RoundedCornerShape(8.dp)
                                 )
@@ -1375,14 +1359,14 @@ fun MainContent(
                                     onClick = { showEqualizerDialog = true },
                                     label = {
                                         Text(
-                                            if (AudioFxManager.isEnabled) "Ekvalizér ON" else "Ekvalizér",
-                                            style = MaterialTheme.typography.labelSmall,
+                                            if (AudioFxManager.isEnabled) "${stringResource(R.string.help_eq_title).split(" ").first()} ON" else stringResource(R.string.help_eq_title).split(" ").first(),
+                                            style = MaterialTheme.typography.labelMedium,
                                             fontWeight = FontWeight.Bold,
-                                            fontSize = 11.sp
+                                            fontSize = 13.sp
                                         )
                                     },
                                     leadingIcon = {
-                                        Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(14.dp), tint = GreenPrimary)
+                                        Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(16.dp), tint = GreenPrimary)
                                     },
                                     shape = RoundedCornerShape(8.dp)
                                 )
@@ -1393,14 +1377,14 @@ fun MainContent(
                                     onClick = { selectSubtitleLanguage(context, mediaController, "cs") },
                                     label = {
                                         Text(
-                                            "A.I titulky",
-                                            style = MaterialTheme.typography.labelSmall,
+                                            stringResource(R.string.ai_subtitles),
+                                            style = MaterialTheme.typography.labelMedium,
                                             fontWeight = FontWeight.Bold,
-                                            fontSize = 11.sp
+                                            fontSize = 13.sp
                                         )
                                     },
                                     leadingIcon = {
-                                        Icon(Icons.Default.ClosedCaption, contentDescription = null, modifier = Modifier.size(14.dp), tint = GreenPrimary)
+                                        Icon(Icons.Default.ClosedCaption, contentDescription = null, modifier = Modifier.size(16.dp), tint = GreenPrimary)
                                     },
                                     shape = RoundedCornerShape(8.dp)
                                 )
@@ -1412,13 +1396,13 @@ fun MainContent(
                                         onClick = { showSubtitleDialog = true },
                                         label = {
                                             Text(
-                                                if (selectedSubtitleLanguage != null) "Titulky ($selectedSubtitleLanguage)" else "Titulky",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                fontSize = 11.sp
+                                                if (selectedSubtitleLanguage != null) "${stringResource(R.string.subtitles)} ($selectedSubtitleLanguage)" else stringResource(R.string.subtitles),
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontSize = 13.sp
                                             )
                                         },
                                         leadingIcon = {
-                                            Icon(Icons.Default.Subtitles, contentDescription = null, modifier = Modifier.size(14.dp), tint = GreenPrimary)
+                                            Icon(Icons.Default.Subtitles, contentDescription = null, modifier = Modifier.size(16.dp), tint = GreenPrimary)
                                         },
                                         shape = RoundedCornerShape(8.dp)
                                     )
@@ -1428,9 +1412,9 @@ fun MainContent(
                                 FilterChip(
                                     selected = false,
                                     onClick = { showShareCastDialog = true },
-                                    label = { Text(stringResource(R.string.cast), style = MaterialTheme.typography.labelSmall, fontSize = 11.sp) },
+                                    label = { Text(stringResource(R.string.cast), style = MaterialTheme.typography.labelMedium, fontSize = 13.sp) },
                                     leadingIcon = {
-                                        Icon(Icons.Default.Cast, contentDescription = null, modifier = Modifier.size(14.dp), tint = GreenPrimary)
+                                        Icon(Icons.Default.Cast, contentDescription = null, modifier = Modifier.size(16.dp), tint = GreenPrimary)
                                     },
                                     shape = RoundedCornerShape(8.dp)
                                 )

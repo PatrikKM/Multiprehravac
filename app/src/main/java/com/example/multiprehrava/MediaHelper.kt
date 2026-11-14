@@ -193,11 +193,14 @@ object MediaHelper {
     ): Result<ExtractedMedia> = withContext(Dispatchers.IO) {
         val cleanUrl = url.trim()
 
+        val isAudio = preferredResolution.startsWith("audio")
+
         val formatSelector = when (preferredResolution) {
-            "1080" -> "best[height<=1080][vcodec!=none][acodec!=none]/best[height<=1080]/18/22/b/best"
-            "720" -> "best[height<=720][vcodec!=none][acodec!=none]/best[height<=720]/18/22/b/best"
-            "480" -> "best[height<=480][vcodec!=none][acodec!=none]/best[height<=480]/18/22/b/best"
-            "360" -> "best[height<=360][vcodec!=none][acodec!=none]/best[height<=360]/18/22/b/best"
+            "1080" -> "bestvideo[height<=1080]+bestaudio/best[height<=1080]/18/22/b/best"
+            "720" -> "bestvideo[height<=720]+bestaudio/best[height<=720]/18/22/b/best"
+            "480" -> "bestvideo[height<=480]+bestaudio/best[height<=480]/18/22/b/best"
+            "360" -> "bestvideo[height<=360][vcodec!=none][acodec!=none]/best[height<=360]/18/22/b/best"
+            "audio_320", "audio_128", "audio" -> "bestaudio[ext=m4a]/bestaudio/best"
             else -> "best[vcodec!=none][acodec!=none]/18/22/b/best"
         }
 
@@ -239,8 +242,13 @@ object MediaHelper {
 
                 var streamUrl = videoInfo.url
                 if (streamUrl.isNullOrEmpty()) {
-                    streamUrl = videoInfo.formats?.lastOrNull { !it.url.isNullOrEmpty() && it.vcodec != "none" && it.acodec != "none" }?.url
-                        ?: videoInfo.formats?.lastOrNull { !it.url.isNullOrEmpty() }?.url
+                    streamUrl = if (isAudio) {
+                        videoInfo.formats?.lastOrNull { !it.url.isNullOrEmpty() && it.acodec != "none" && it.vcodec == "none" }?.url
+                            ?: videoInfo.formats?.lastOrNull { !it.url.isNullOrEmpty() }?.url
+                    } else {
+                        videoInfo.formats?.lastOrNull { !it.url.isNullOrEmpty() && it.vcodec != "none" && it.acodec != "none" }?.url
+                            ?: videoInfo.formats?.lastOrNull { !it.url.isNullOrEmpty() }?.url
+                    }
                 }
 
                 if (!streamUrl.isNullOrEmpty()) {
@@ -265,9 +273,14 @@ object MediaHelper {
             val extractor = service.getStreamExtractor(cleanUrl) as StreamExtractor
             extractor.fetchPage()
 
-            val streamUrl = extractor.videoStreams?.firstOrNull()?.url
-                ?: extractor.audioStreams?.firstOrNull()?.url
-                ?: extractor.videoOnlyStreams?.firstOrNull()?.url
+            val streamUrl = if (isAudio) {
+                extractor.audioStreams?.firstOrNull()?.url
+                    ?: extractor.videoStreams?.firstOrNull()?.url
+            } else {
+                extractor.videoStreams?.firstOrNull()?.url
+                    ?: extractor.audioStreams?.firstOrNull()?.url
+                    ?: extractor.videoOnlyStreams?.firstOrNull()?.url
+            }
 
             if (!streamUrl.isNullOrEmpty()) {
                 return@withContext Result.success(
@@ -390,10 +403,10 @@ object MediaHelper {
 
         // 2. Fallback to System DownloadManager via extracted stream URL
         try {
-            val extracted = extractMedia(context, cleanUrl).getOrThrow()
+            val extracted = extractMedia(context, cleanUrl, preferredResolution = qualitySpec).getOrThrow()
             val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             val isAudio = qualitySpec.startsWith("audio")
-            val extension = if (isAudio) "mp3" else "mp4"
+            val extension = if (isAudio) "m4a" else "mp4"
             val fileName = "${extracted.title.replace(Regex("[^a-zA-Z0-9._-]"), "_")}.$extension"
 
             val request = DownloadManager.Request(extracted.streamUrl.toUri())

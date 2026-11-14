@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Multipřehrávač</string>
-    <string name="author_contact">v2.1 • patrik.mohler@gmail.com</string>
+    <string name="support_me">Podpoř mě</string>
 
     <!-- Header & Search -->
     <string name="search_youtube">Vyhledat na YouTube</string>
