@@ -23,5 +23,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Multiprehravač"
+rootProject.name = "TubeXXL"
 include(":app")

@@ -835,151 +835,104 @@ fun MainContent(
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Icon(Icons.Default.Search, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(14.dp))
-                                Text(
-                                    text = stringResource(R.string.search_youtube),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                            Text(
-                                text = stringResource(R.string.search_caption),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        Text(
+                            text = stringResource(R.string.search_caption),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(38.dp)
-                                    .background(Color(0xFF0F141C), RoundedCornerShape(8.dp))
-                                    .border(
-                                        width = 2.dp,
-                                        color = if (searchQuery.isNotEmpty()) GreenPrimary else GreenPrimary.copy(alpha = 0.55f),
-                                        shape = RoundedCornerShape(8.dp)
-                                    )
-                                    .padding(horizontal = 8.dp),
-                                contentAlignment = Alignment.CenterStart
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Icon(Icons.Default.Search, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(16.dp))
-                                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                                        if (searchQuery.isEmpty()) {
-                                            Text(stringResource(R.string.search_placeholder), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        val performSearch: () -> Unit = {
+                            if (searchQuery.isNotBlank() && !isSearching) {
+                                isSearching = true
+                                scope.launch {
+                                    val result = MediaHelper.searchYouTube(searchQuery)
+                                    isSearching = false
+                                    result.onSuccess { items ->
+                                        searchResults = items
+                                        if (items.isEmpty()) {
+                                            Toast.makeText(context, context.getString(R.string.no_results), Toast.LENGTH_SHORT).show()
                                         }
-                                        BasicTextField(
-                                            value = searchQuery,
-                                            onValueChange = { searchQuery = it },
-                                            singleLine = true,
-                                            textStyle = TextStyle(color = TextWhite, fontSize = 13.sp, fontWeight = FontWeight.Medium),
-                                            cursorBrush = SolidColor(GreenPrimary),
-                                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                                            keyboardActions = KeyboardActions(
-                                                onSearch = {
-                                                    if (searchQuery.isNotBlank()) {
-                                                        isSearching = true
-                                                        scope.launch {
-                                                            val result = MediaHelper.searchYouTube(searchQuery)
-                                                            isSearching = false
-                                                            result.onSuccess { items ->
-                                                                searchResults = items
-                                                                if (items.isEmpty()) {
-                                                                    Toast.makeText(context, context.getString(R.string.no_results), Toast.LENGTH_SHORT).show()
-                                                                }
-                                                            }.onFailure { error ->
-                                                                Toast.makeText(context, context.getString(R.string.search_error, error.localizedMessage), Toast.LENGTH_LONG).show()
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            ),
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-                                    }
-                                    if (searchQuery.isNotEmpty()) {
-                                        IconButton(
-                                            onClick = { searchQuery = "" },
-                                            modifier = Modifier.size(20.dp)
-                                        ) {
-                                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.clear_desc), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
-                                        }
+                                    }.onFailure { error ->
+                                        Toast.makeText(context, context.getString(R.string.search_error, error.localizedMessage), Toast.LENGTH_LONG).show()
                                     }
                                 }
                             }
+                        }
 
-                            FilledTonalIconButton(
-                                onClick = { launchVoiceRecognizer() },
-                                modifier = Modifier.size(36.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(38.dp)
+                                .background(Color(0xFF0F141C), RoundedCornerShape(8.dp))
+                                .border(
+                                    width = 2.dp,
+                                    color = if (searchQuery.isNotEmpty()) GreenPrimary else GreenPrimary.copy(alpha = 0.55f),
+                                    shape = RoundedCornerShape(8.dp)
                                 )
+                                .padding(start = 10.dp, end = 4.dp),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Icon(
-                                    Icons.Default.Mic,
-                                    contentDescription = stringResource(R.string.voice_search_desc),
-                                    tint = GreenPrimary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-
-                            Button(
-                                onClick = {
-                                    if (searchQuery.isNotBlank()) {
-                                        isSearching = true
-                                        scope.launch {
-                                            val result = MediaHelper.searchYouTube(searchQuery)
-                                            isSearching = false
-                                            result.onSuccess { items ->
-                                                searchResults = items
-                                                if (items.isEmpty()) {
-                                                    Toast.makeText(context, context.getString(R.string.no_results), Toast.LENGTH_SHORT).show()
-                                                }
-                                            }.onFailure { error ->
-                                                Toast.makeText(context, context.getString(R.string.search_error, error.localizedMessage), Toast.LENGTH_LONG).show()
-                                            }
-                                        }
+                                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                                    if (searchQuery.isEmpty()) {
+                                        Text(stringResource(R.string.search_placeholder), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
-                                },
-                                enabled = !isSearching && searchQuery.isNotBlank(),
-                                modifier = Modifier
-                                    .height(36.dp)
-                                    .width(36.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                contentPadding = PaddingValues(0.dp)
-                            ) {
-                                if (isSearching) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(16.dp),
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        strokeWidth = 2.dp
+                                    BasicTextField(
+                                        value = searchQuery,
+                                        onValueChange = { searchQuery = it },
+                                        singleLine = true,
+                                        textStyle = TextStyle(color = TextWhite, fontSize = 13.sp, fontWeight = FontWeight.Medium),
+                                        cursorBrush = SolidColor(GreenPrimary),
+                                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                                        keyboardActions = KeyboardActions(
+                                            onSearch = { performSearch() }
+                                        ),
+                                        modifier = Modifier.fillMaxWidth()
                                     )
-                                } else {
+                                }
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(
+                                        onClick = { searchQuery = "" },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.clear_desc), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
+                                    }
+                                }
+                                IconButton(
+                                    onClick = { launchVoiceRecognizer() },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
                                     Icon(
-                                        Icons.Default.Search,
-                                        contentDescription = stringResource(R.string.search_button_desc),
+                                        Icons.Default.Mic,
+                                        contentDescription = stringResource(R.string.voice_search_desc),
+                                        tint = GreenPrimary,
                                         modifier = Modifier.size(18.dp)
                                     )
+                                }
+                                IconButton(
+                                    onClick = performSearch,
+                                    enabled = !isSearching && searchQuery.isNotBlank(),
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    if (isSearching) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            color = GreenPrimary,
+                                            strokeWidth = 2.dp
+                                        )
+                                    } else {
+                                        Icon(
+                                            Icons.Default.Search,
+                                            contentDescription = stringResource(R.string.search_button_desc),
+                                            tint = if (searchQuery.isNotBlank()) GreenPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -1198,63 +1151,57 @@ fun MainContent(
                                     }
                                 },
                                 enabled = !isLoading && urlInput.isNotBlank(),
-                                modifier = Modifier.height(36.dp),
+                                modifier = Modifier.size(38.dp),
                                 shape = RoundedCornerShape(8.dp),
-                                contentPadding = PaddingValues(horizontal = 8.dp)
+                                contentPadding = PaddingValues(0.dp)
                             ) {
                                 if (isLoading) {
                                     CircularProgressIndicator(
-                                        modifier = Modifier.size(14.dp),
+                                        modifier = Modifier.size(16.dp),
                                         color = MaterialTheme.colorScheme.onPrimary,
                                         strokeWidth = 2.dp
                                     )
                                 } else {
                                     Icon(
                                         Icons.Default.PlayArrow,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(14.dp)
+                                        contentDescription = stringResource(R.string.play),
+                                        modifier = Modifier.size(20.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(2.dp))
-                                    Text(stringResource(R.string.play), fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                                 }
                             }
 
                             OutlinedButton(
                                 onClick = { filePickerLauncher.launch("*/*") },
-                                modifier = Modifier.height(38.dp),
+                                modifier = Modifier.size(38.dp),
                                 shape = RoundedCornerShape(8.dp),
-                                contentPadding = PaddingValues(horizontal = 6.dp)
+                                contentPadding = PaddingValues(0.dp)
                             ) {
                                 Icon(
                                     Icons.Default.FolderOpen,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(14.dp)
+                                    contentDescription = stringResource(R.string.open),
+                                    modifier = Modifier.size(18.dp)
                                 )
-                                Spacer(modifier = Modifier.width(2.dp))
-                                Text(stringResource(R.string.open), fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                             }
 
                             FilledTonalButton(
                                 onClick = { showDownloadDialog = true },
                                 enabled = !isDownloading && urlInput.isNotBlank(),
-                                modifier = Modifier.height(38.dp),
+                                modifier = Modifier.size(38.dp),
                                 shape = RoundedCornerShape(8.dp),
-                                contentPadding = PaddingValues(horizontal = 6.dp)
+                                contentPadding = PaddingValues(0.dp)
                             ) {
                                 if (isDownloading) {
                                     Text(
                                         "${downloadProgress.toInt()}%",
-                                        fontSize = 12.sp,
+                                        fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                 } else {
                                     Icon(
                                         Icons.Default.Download,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(14.dp)
+                                        contentDescription = stringResource(R.string.download),
+                                        modifier = Modifier.size(18.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(2.dp))
-                                    Text(stringResource(R.string.download), fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                                 }
                             }
                         }

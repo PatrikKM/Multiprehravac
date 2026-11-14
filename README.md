@@ -1,10 +1,10 @@
-# 🎬 Multipřehrávač v2.2
+# 🎬 TubeXXL v2.2
 
 ![Android](https://img.shields.io/badge/Android-Media3%20ExoPlayer-00E676?style=for-the-badge&logo=android)
 ![Kotlin](https://img.shields.io/badge/Kotlin-Jetpack%20Compose-7F52FF?style=for-the-badge&logo=kotlin)
 ![License](https://img.shields.io/badge/License-MIT-blue.style=for-the-badge)
 
-**Multipřehrávač** je moderní, ultra-kompaktní a výkonná Android aplikace pro streamování a přehrávání videí i hudby z **YouTube**, **přímých URL odkazů (MP4, MP3, HLS)** a **lokálních souborů**.
+**TubeXXL** je moderní, ultra-kompaktní a výkonná Android aplikace pro streamování a přehrávání videí i hudby z **YouTube**, **přímých URL odkazů (MP4, MP3, HLS)** a **lokálních souborů**.
 
 Aplikace přináší prémiový **Dark Cyber Slate** design, 5-pásmový hardwarový **Ekvalizér**, **Bass Boost**, **Loudness Enhancer** (zesilovač tichých videí), autonomního **Hlasového Agenta v češtině**, **A.I. české titulky** a podporu přehrávání na pozadí.
 
