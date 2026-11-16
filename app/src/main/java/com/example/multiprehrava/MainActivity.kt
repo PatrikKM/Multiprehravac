@@ -392,7 +392,7 @@ fun MainContent(
                                     PlaylistManager.setPlaylist(items, 0)
                                     playTrack(items[0])
                                 } else {
-                                    Toast.makeText(context, "Nenalezeny žádné výsledky", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.no_results), Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
@@ -417,10 +417,15 @@ fun MainContent(
 
     val launchVoiceRecognizer: () -> Unit = {
         try {
+            val speechLang = when (currentLanguage) {
+                "en" -> "en-US"
+                "es" -> "es-ES"
+                else -> "cs-CZ"
+            }
             val intent = Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                 putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "cs-CZ")
-                putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Řekněte hlasový příkaz (např. \"Přehrát Queen\", \"Další\", \"Pauza\")...")
+                putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, speechLang)
+                putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, context.getString(R.string.voice_prompt))
             }
             speechLauncher.launch(intent)
         } catch (e: Exception) {
@@ -530,7 +535,7 @@ fun MainContent(
             onPlayItem = { urlToPlay ->
                 urlInput = urlToPlay
                 if (urlToPlay.startsWith("content://") || urlToPlay.startsWith("file://")) {
-                    currentTitle = getFileName(context, urlToPlay.toUri()) ?: "Lokální soubor"
+                    currentTitle = getFileName(context, urlToPlay.toUri()) ?: context.getString(R.string.local_file_name)
                     currentSubtitles = emptyList()
                     selectedSubtitleLanguage = null
                     mediaController?.let { controller ->
@@ -660,37 +665,41 @@ fun MainContent(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                stringResource(R.string.control_bar),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            // Three always-visible flag language switches (CZ, EN, ES)
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Prominent Language Toggle Button in TopAppBar
-                                Surface(
-                                    color = GreenPrimary.copy(alpha = 0.2f),
-                                    shape = RoundedCornerShape(8.dp),
-                                    modifier = Modifier.clickable {
-                                        onLanguageChange(if (currentLanguage == "cs") "en" else "cs")
-                                    }
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+                                listOf(
+                                    "cs" to "🇨🇿",
+                                    "en" to "🇬🇧",
+                                    "es" to "🇨🇺"
+                                ).forEach { (langCode, flagEmoji) ->
+                                    val isSelected = currentLanguage == langCode
+                                    Surface(
+                                        color = if (isSelected) GreenPrimary.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                        shape = RoundedCornerShape(8.dp),
+                                        border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, GreenPrimary) else null,
+                                        modifier = Modifier.clickable {
+                                            onLanguageChange(langCode)
+                                        }
                                     ) {
-                                        Text(
-                                            text = if (currentLanguage == "cs") "CZ" else "EN",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 13.sp,
-                                            color = GreenPrimary
-                                        )
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                        ) {
+                                            Text(
+                                                text = flagEmoji,
+                                                fontSize = 18.sp
+                                            )
+                                        }
                                     }
                                 }
+                            }
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 FilledTonalIconButton(
                                     onClick = {
                                         historyItems = HistoryManager.getHistory(context)
@@ -1526,13 +1535,13 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                             Icon(Icons.Default.Tune, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(20.dp))
                         }
                         Text(
-                            "Ekvalizér a Zvukové Efekty",
+                            stringResource(R.string.equalizer_title),
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
                     IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.Close, contentDescription = "Zavřít", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
                     }
                 }
 
@@ -1751,7 +1760,7 @@ fun HistoryDialog(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        "Historie je prázdná",
+                        stringResource(R.string.history_empty),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1940,7 +1949,7 @@ fun HelpDialog(onDismiss: () -> Unit) {
                 HelpItem(
                     icon = Icons.Default.SkipNext,
                     title = stringResource(R.string.help_playlist_title),
-                    description = "Při vyhledání a spuštění skladby se z výsledků vyhledávání vytvoří playlist. Po skončení jedné skladby přehráváče automaticky pokračuje na další. K dispozici jsou tlačítka 'Předchozí' (⏮) a 'Další' (⏭)."
+                    description = stringResource(R.string.help_playlist_desc)
                 )
                 HelpItem(
                     icon = Icons.Default.ClosedCaption,
@@ -2269,7 +2278,7 @@ fun ShareCastDialog(
                         Column {
                             Text(stringResource(R.string.cast_youtube_title), fontWeight = FontWeight.SemiBold)
                             Text(
-                                "Spustí video v aplikaci YouTube pro odeslání na TV",
+                                stringResource(R.string.cast_youtube_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -2301,7 +2310,7 @@ fun ShareCastDialog(
                         Column {
                             Text(stringResource(R.string.share_link_title), fontWeight = FontWeight.SemiBold)
                             Text(
-                                "Otevře systémovou nabídku sdílení pro Smart View a Chromecast",
+                                stringResource(R.string.share_link_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -2331,7 +2340,7 @@ fun ShareCastDialog(
                         Column {
                             Text(stringResource(R.string.copy_link_title), fontWeight = FontWeight.SemiBold)
                             Text(
-                                "Uloží URL adresu videa do schránky",
+                                stringResource(R.string.copy_link_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -2412,7 +2421,7 @@ fun PermissionsDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
-                    "Přehled systémových oprávnění vyžadovaných aplikací:",
+                    stringResource(R.string.permissions_desc),
                     style = MaterialTheme.typography.bodyMedium
                 )
 

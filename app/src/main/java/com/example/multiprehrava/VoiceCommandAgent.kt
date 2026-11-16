@@ -38,6 +38,27 @@ object VoiceCommandAgent {
             }
         }
 
+        if (langCode == "es") {
+            return when {
+                text.contains("siguiente") || text.contains("próximo") || text.contains("proximo") -> CommandResult.PlayNext
+                text.contains("anterior") || text.contains("atrás") || text.contains("atras") -> CommandResult.PlayPrevious
+                text.contains("pausa") || text.contains("detener") || text.contains("parar") -> CommandResult.Pause
+                text == "reproducir" || text == "continuar" || text == "reanudar" -> CommandResult.Resume
+                text.contains("descargar") || text.contains("bajar") -> CommandResult.Download
+                text.contains("salir") || text.contains("cerrar") -> CommandResult.ExitApp
+                text.contains("1080") -> CommandResult.ChangeQuality("1080")
+                text.contains("720") -> CommandResult.ChangeQuality("720")
+                text.contains("480") -> CommandResult.ChangeQuality("480")
+                text.contains("360") -> CommandResult.ChangeQuality("360")
+                text.startsWith("reproducir ") || text.startsWith("buscar ") || text.startsWith("pon ") -> {
+                    val query = text.replace(Regex("^(reproducir|buscar|pon)\\s+"), "").trim()
+                    if (query.isNotBlank()) CommandResult.SearchAndPlay(query) else CommandResult.Unknown(spokenText)
+                }
+                text.isNotBlank() -> CommandResult.SearchAndPlay(text)
+                else -> CommandResult.Unknown(spokenText)
+            }
+        }
+
         // Czech fallback
         return when {
             text.contains("další") || text.contains("dalsi") || text.contains("přeskočit") || text.contains("next") -> CommandResult.PlayNext
