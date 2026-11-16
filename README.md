@@ -31,6 +31,7 @@ Aplikace přináší prémiový **Dark Cyber Slate** design, 5-pásmový hardwar
 - **Výška zadávacích polí 36.dp** zarovnaná do jedné čitelné línie s tlačítky *Přehrát*, *Otevřít* a *Stáhnout*.
 - **Výrazný tučný lemovací rámček (`2.dp GreenPrimary`)** a tmavé terminálové pozadí (`#0F141C`) pro okamžité odlišení vstupních polí.
 - **Kompaktní záhlaví pod ovládací lištou**: Název aplikace a odkaz *Podpoř mě* pod ovládací lištou, bez rušivých údajů na obrazovce přehrávače (aktuální verze `v2.2`).
+- **Chytré vyhledávání (YouTube & YouTube Music)**: Režim `Auto` automaticky rozpozná hudební dotazy (YouTube Music) a video dotazy (YouTube), případně zkombinuje oba zdroje se štítky `🎵 YT Music` a `🎬 YouTube`. K dispozici je i ruční přepnutí (`Auto` / `🎬 YouTube` / `🎵 YT Music`).
 
 ### 📺 5. Přehrávač & Streamovací Engine
 - **Media3 ExoPlayer** + **MediaSessionService** (služba na popředí s ovládáním v notifikační liště a přehráváním při zhasnuté obrazovce).

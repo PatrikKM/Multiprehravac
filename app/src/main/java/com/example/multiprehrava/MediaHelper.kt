@@ -18,6 +18,8 @@ import org.schabi.newpipe.extractor.localization.Localization
 import org.schabi.newpipe.extractor.stream.StreamExtractor
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.net.HttpURLConnection
@@ -38,12 +40,19 @@ data class ExtractedMedia(
     val subtitles: List<SubtitleTrack> = emptyList()
 )
 
+enum class SearchMode {
+    AUTO,
+    YOUTUBE,
+    YOUTUBE_MUSIC
+}
+
 data class SearchResultItem(
     val title: String,
     val url: String,
     val uploader: String,
     val duration: String,
-    val thumbnailUrl: String?
+    val thumbnailUrl: String?,
+    val source: String = "YouTube"
 )
 
 object MediaHelper {
@@ -300,30 +309,114 @@ object MediaHelper {
         Result.failure(Exception("Nenalezen přímý odkaz na stream."))
     }
 
-    suspend fun searchYouTube(query: String): Result<List<SearchResultItem>> = withContext(Dispatchers.IO) {
+    fun detectSearchIntent(query: String): SearchMode {
+        val lower = query.lowercase().trim()
+        val videoKeywords = listOf(
+            "tutorial", "návod", "navod", "recenze", "review", "trailer",
+            "gameplay", "vlog", "rozhovor", "interview", "dokument",
+            "documentary", "film", "movie", "koncert", "concert", "live",
+            "unboxing", "podcast", "4k", "video", "klip", "clip",
+            "how to", "jak na", "cómo", "como"
+        )
+        val musicKeywords = listOf(
+            "píseň", "pisen", "písnička", "pisnicka", "hudba", "skladba",
+            "album", "song", "music", "track", "audio", "mp3", "lyrics",
+            "remix", "cover", "soundtrack", "ost", "beat", "instrumental",
+            "música", "musica", "canción", "cancion", "álbum", "letra"
+        )
+
+        if (videoKeywords.any { lower.contains(it) }) {
+            return SearchMode.YOUTUBE
+        }
+        if (musicKeywords.any { lower.contains(it) } || lower.contains(" - ")) {
+            return SearchMode.YOUTUBE_MUSIC
+        }
+        return SearchMode.AUTO
+    }
+
+    private fun executeYouTubeSearch(
+        query: String,
+        contentFilters: List<String>,
+        sourceLabel: String
+    ): List<SearchResultItem> {
+        val service = ServiceList.YouTube
+        val searchExtractor = if (contentFilters.isNotEmpty()) {
+            service.getSearchExtractor(query, contentFilters, null)
+        } else {
+            service.getSearchExtractor(query)
+        }
+        searchExtractor.fetchPage()
+
+        return searchExtractor.initialPage.items
+            .filterIsInstance<StreamInfoItem>()
+            .map { item ->
+                val durationFormatted = if (item.duration > 0) {
+                    val minutes = item.duration / 60
+                    val seconds = item.duration % 60
+                    "%d:%02d".format(minutes, seconds)
+                } else ""
+
+                SearchResultItem(
+                    title = item.name ?: "Neznámý název",
+                    url = item.url ?: "",
+                    uploader = item.uploaderName ?: "",
+                    duration = durationFormatted,
+                    thumbnailUrl = item.thumbnails.firstOrNull()?.url,
+                    source = sourceLabel
+                )
+            }
+    }
+
+    suspend fun searchYouTube(
+        query: String,
+        mode: SearchMode = SearchMode.AUTO
+    ): Result<List<SearchResultItem>> = withContext(Dispatchers.IO) {
         try {
             initNewPipe()
-            val service = ServiceList.YouTube
-            val searchExtractor = service.getSearchExtractor(query.trim())
-            searchExtractor.fetchPage()
+            val cleanQuery = query.trim()
+            val resolvedMode = if (mode == SearchMode.AUTO) detectSearchIntent(cleanQuery) else mode
 
-            val items = searchExtractor.initialPage.items
-                .filterIsInstance<StreamInfoItem>()
-                .map { item ->
-                    val durationFormatted = if (item.duration > 0) {
-                        val minutes = item.duration / 60
-                        val seconds = item.duration % 60
-                        "%d:%02d".format(minutes, seconds)
-                    } else ""
-
-                    SearchResultItem(
-                        title = item.name ?: "Neznámý název",
-                        url = item.url ?: "",
-                        uploader = item.uploaderName ?: "",
-                        duration = durationFormatted,
-                        thumbnailUrl = item.thumbnails.firstOrNull()?.url
-                    )
+            val items: List<SearchResultItem> = when (resolvedMode) {
+                SearchMode.YOUTUBE_MUSIC -> {
+                    val musicItems = runCatching {
+                        executeYouTubeSearch(cleanQuery, listOf("music_songs"), "YT Music")
+                    }.getOrDefault(emptyList())
+                    musicItems.ifEmpty {
+                        executeYouTubeSearch(cleanQuery, emptyList(), "YouTube")
+                    }
                 }
+                SearchMode.YOUTUBE -> {
+                    executeYouTubeSearch(cleanQuery, emptyList(), "YouTube")
+                }
+                SearchMode.AUTO -> coroutineScope {
+                    val musicDeferred = async {
+                        runCatching {
+                            executeYouTubeSearch(cleanQuery, listOf("music_songs"), "YT Music")
+                        }.getOrDefault(emptyList())
+                    }
+                    val videoDeferred = async {
+                        runCatching {
+                            executeYouTubeSearch(cleanQuery, emptyList(), "YouTube")
+                        }.getOrDefault(emptyList())
+                    }
+                    val musicResults = musicDeferred.await()
+                    val videoResults = videoDeferred.await()
+
+                    // Interleave YT Music and YouTube results, deduplicating by URL
+                    val combined = mutableListOf<SearchResultItem>()
+                    val seenUrls = mutableSetOf<String>()
+                    val maxLen = maxOf(musicResults.size, videoResults.size)
+                    for (i in 0 until maxLen) {
+                        if (i < musicResults.size && seenUrls.add(musicResults[i].url)) {
+                            combined.add(musicResults[i])
+                        }
+                        if (i < videoResults.size && seenUrls.add(videoResults[i].url)) {
+                            combined.add(videoResults[i])
+                        }
+                    }
+                    combined
+                }
+            }
 
             Result.success(items)
         } catch (e: Throwable) {

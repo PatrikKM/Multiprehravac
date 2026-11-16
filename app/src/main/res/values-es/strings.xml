@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">TubeXXL</string>
     <string name="support_me">Apóyame</string>
+    <string name="clear_button">CLEAR !</string>
+    <string name="player_cleared">Reproductor limpiado</string>
 
     <!-- Header & Search -->
     <string name="search_youtube">Buscar en YouTube</string>
@@ -13,6 +15,9 @@
     <string name="search_error">Error de búsqueda: %1$s</string>
     <string name="search_results_title">Resultados de búsqueda (%1$d)</string>
     <string name="hide">Ocultar</string>
+    <string name="search_mode_auto">Auto</string>
+    <string name="search_mode_video">🎬 YouTube</string>
+    <string name="search_mode_music">🎵 YT Music</string>
 
     <!-- Direct URL -->
     <string name="play_from_url">Reproducir desde URL / Archivo local</string>
@@ -145,7 +150,9 @@
 
     <!-- Help items -->
     <string name="help_search_title">Búsqueda de medios</string>
-    <string name="help_search_desc">Escribe el nombre de un video o canción en el cuadro de búsqueda y pulsa el botón de la Lupa. Los resultados de YouTube aparecerán en una lista clara.</string>
+    <string name="help_search_desc">Escribe el nombre de un video o canción en el cuadro de búsqueda y pulsa el botón de la Lupa. Los resultados de YouTube y YouTube Music aparecerán en una lista clara.</string>
+    <string name="help_smart_search_title">Búsqueda inteligente (YouTube y YT Music)</string>
+    <string name="help_smart_search_desc">En modo Auto, la aplicación detecta tu intención: las consultas musicales (canción, música, álbum, remix, letra, Artista - Canción) buscan en YouTube Music; las de video (tutorial, reseña, tráiler, concierto, en vivo, 4K) en YouTube; y las generales combinan ambas fuentes con etiquetas 🎵 YT Music y 🎬 YouTube. También puedes cambiar el modo manualmente con los botones Auto / YouTube / YT Music.</string>
     <string name="help_eq_title">Ecualizador y efectos de audio</string>
     <string name="help_eq_desc">Ecualizador de hardware de 5 bandas con preajustes (Rock, Pop, Jazz, Graves...), Bass Boost para graves profundos y Loudness Enhancer para amplificar videos y música con volumen bajo.</string>
     <string name="help_github_title">Descargar desde GitHub</string>
@@ -170,5 +177,7 @@
     <string name="help_bg_desc">El reproductor funciona como un servicio en primer plano. El audio sigue sonando incluso con la pantalla apagada o al cambiar a otra aplicación.</string>
     <string name="help_quit_title">Cerrar reproductor</string>
     <string name="help_quit_desc">Pulsa el botón rojo de encendido en la esquina superior derecha para detener al instante la reproducción en segundo plano, liberar memoria y cerrar la aplicación.</string>
+    <string name="help_clear_title">CLEAR ! (Estado inicial)</string>
+    <string name="help_clear_desc">Pulsa el botón rojo CLEAR ! junto al nombre de la aplicación para cerrar el archivo en reproducción, limpiar la búsqueda, la URL y la lista, y devolver la pantalla inicial a su estado predeterminado.</string>
 
 </resources>

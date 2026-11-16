@@ -142,6 +142,7 @@ fun MainContent(
     val scope = rememberCoroutineScope()
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
+    var searchMode by rememberSaveable { mutableStateOf(SearchMode.AUTO) }
     var isSearching by remember { mutableStateOf(false) }
     var searchResults by remember { mutableStateOf<List<SearchResultItem>>(emptyList()) }
 
@@ -204,6 +205,33 @@ fun MainContent(
 
         Toast.makeText(context, context.getString(R.string.app_exited), Toast.LENGTH_SHORT).show()
         (context as? Activity)?.finishAndRemoveTask()
+    }
+
+    val clearAllAction: () -> Unit = {
+        try {
+            mediaController?.let { controller ->
+                controller.stop()
+                controller.clearMediaItems()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        searchQuery = ""
+        searchResults = emptyList()
+        searchMode = SearchMode.AUTO
+        urlInput = ""
+        isLoading = false
+        isSearching = false
+        currentTitle = ""
+        currentSubtitles = emptyList()
+        selectedSubtitleLanguage = null
+        nativeSubtitleLines = emptyList()
+        playerCurrentTimeMs = 0L
+        isFullscreen = false
+        activePlaylist = emptyList()
+        currentPlaylistIndex = -1
+        PlaylistManager.setPlaylist(emptyList(), -1)
+        Toast.makeText(context, context.getString(R.string.player_cleared), Toast.LENGTH_SHORT).show()
     }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -380,12 +408,12 @@ fun MainContent(
             val spokenText = result.data?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
             if (!spokenText.isNullOrBlank()) {
                 Toast.makeText(context, context.getString(R.string.voice_command_recognized, spokenText), Toast.LENGTH_SHORT).show()
-                when (val command = VoiceCommandAgent.parseCommand(spokenText)) {
+                when (val command = VoiceCommandAgent.parseCommand(spokenText, currentLanguage)) {
                     is VoiceCommandAgent.CommandResult.SearchAndPlay -> {
                         searchQuery = command.query
                         isSearching = true
                         scope.launch {
-                            val res = MediaHelper.searchYouTube(command.query)
+                            val res = MediaHelper.searchYouTube(command.query, searchMode)
                             isSearching = false
                             res.onSuccess { items ->
                                 if (items.isNotEmpty()) {
@@ -652,10 +680,13 @@ fun MainContent(
             onDownloadClick = { showDownloadDialog = true }
         )
     } else {
+        val isLandscapeScreen = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = {
-                TopAppBar(
+                if (!isLandscapeScreen) {
+                    TopAppBar(
                     title = {},
                     actions = {
                         Row(
@@ -749,15 +780,17 @@ fun MainContent(
                         containerColor = MaterialTheme.colorScheme.background
                     )
                 )
+                }
             }
         ) { innerPadding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .padding(horizontal = 10.dp, vertical = 2.dp),
+                    .padding(horizontal = if (isLandscapeScreen) 6.dp else 10.dp, vertical = 2.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                if (!isLandscapeScreen) {
                 // Compact Header Banner below Control Bar (App name + Support badge only)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -794,6 +827,22 @@ fun MainContent(
                             fontSize = 18.sp,
                             color = MaterialTheme.colorScheme.onBackground
                         )
+
+                        // Framed red CLEAR ! button next to TubeXXL
+                        Surface(
+                            color = Color(0xFFFF5252).copy(alpha = 0.12f),
+                            shape = RoundedCornerShape(6.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFF5252)),
+                            modifier = Modifier.clickable { clearAllAction() }
+                        ) {
+                            Text(
+                                text = stringResource(R.string.clear_button),
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 12.sp,
+                                color = Color(0xFFFF5252),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
                     }
 
                     // "Podpoř mě" Buy Me a Coffee badge under Control Bar
@@ -825,8 +874,9 @@ fun MainContent(
                         }
                     }
                 }
+                }
 
-                // Ultra-Compact Search Card
+                // Single-Row Ultra-Compact Search Bar (Voice & Text + Smart Mode)
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -841,21 +891,14 @@ fun MainContent(
                     )
                 ) {
                     Column(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Text(
-                            text = stringResource(R.string.search_caption),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
                         val performSearch: () -> Unit = {
                             if (searchQuery.isNotBlank() && !isSearching) {
                                 isSearching = true
                                 scope.launch {
-                                    val result = MediaHelper.searchYouTube(searchQuery)
+                                    val result = MediaHelper.searchYouTube(searchQuery, searchMode)
                                     isSearching = false
                                     result.onSuccess { items ->
                                         searchResults = items
@@ -869,79 +912,134 @@ fun MainContent(
                             }
                         }
 
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(38.dp)
-                                .background(Color(0xFF0F141C), RoundedCornerShape(8.dp))
-                                .border(
-                                    width = 2.dp,
-                                    color = if (searchQuery.isNotEmpty()) GreenPrimary else GreenPrimary.copy(alpha = 0.55f),
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                                .padding(start = 10.dp, end = 4.dp),
-                            contentAlignment = Alignment.CenterStart
+                        // Single compact row: Search input + Mic + Search + Smart Mode pill (+ quick icons in landscape)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(36.dp)
+                                    .background(Color(0xFF0F141C), RoundedCornerShape(8.dp))
+                                    .border(
+                                        width = 1.5.dp,
+                                        color = if (searchQuery.isNotEmpty()) GreenPrimary else GreenPrimary.copy(alpha = 0.55f),
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .padding(start = 10.dp, end = 4.dp),
+                                contentAlignment = Alignment.CenterStart
                             ) {
-                                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                                    if (searchQuery.isEmpty()) {
-                                        Text(stringResource(R.string.search_placeholder), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
-                                    BasicTextField(
-                                        value = searchQuery,
-                                        onValueChange = { searchQuery = it },
-                                        singleLine = true,
-                                        textStyle = TextStyle(color = TextWhite, fontSize = 13.sp, fontWeight = FontWeight.Medium),
-                                        cursorBrush = SolidColor(GreenPrimary),
-                                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                                        keyboardActions = KeyboardActions(
-                                            onSearch = { performSearch() }
-                                        ),
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-                                if (searchQuery.isNotEmpty()) {
-                                    IconButton(
-                                        onClick = { searchQuery = "" },
-                                        modifier = Modifier.size(24.dp)
-                                    ) {
-                                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.clear_desc), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
-                                    }
-                                }
-                                IconButton(
-                                    onClick = { launchVoiceRecognizer() },
-                                    modifier = Modifier.size(28.dp)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    Icon(
-                                        Icons.Default.Mic,
-                                        contentDescription = stringResource(R.string.voice_search_desc),
-                                        tint = GreenPrimary,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                                IconButton(
-                                    onClick = performSearch,
-                                    enabled = !isSearching && searchQuery.isNotBlank(),
-                                    modifier = Modifier.size(28.dp)
-                                ) {
-                                    if (isSearching) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(16.dp),
-                                            color = GreenPrimary,
-                                            strokeWidth = 2.dp
+                                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                                        if (searchQuery.isEmpty()) {
+                                            Text(
+                                                text = stringResource(R.string.search_caption),
+                                                fontSize = 13.sp,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        BasicTextField(
+                                            value = searchQuery,
+                                            onValueChange = { searchQuery = it },
+                                            singleLine = true,
+                                            textStyle = TextStyle(color = TextWhite, fontSize = 13.sp, fontWeight = FontWeight.Medium),
+                                            cursorBrush = SolidColor(GreenPrimary),
+                                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                                            keyboardActions = KeyboardActions(
+                                                onSearch = { performSearch() }
+                                            ),
+                                            modifier = Modifier.fillMaxWidth()
                                         )
-                                    } else {
+                                    }
+                                    if (searchQuery.isNotEmpty()) {
+                                        IconButton(
+                                            onClick = { searchQuery = "" },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.clear_desc), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
+                                        }
+                                    }
+                                    IconButton(
+                                        onClick = { launchVoiceRecognizer() },
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
                                         Icon(
-                                            Icons.Default.Search,
-                                            contentDescription = stringResource(R.string.search_button_desc),
-                                            tint = if (searchQuery.isNotBlank()) GreenPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            Icons.Default.Mic,
+                                            contentDescription = stringResource(R.string.voice_search_desc),
+                                            tint = GreenPrimary,
                                             modifier = Modifier.size(18.dp)
                                         )
                                     }
+                                    IconButton(
+                                        onClick = performSearch,
+                                        enabled = !isSearching && searchQuery.isNotBlank(),
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        if (isSearching) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(16.dp),
+                                                color = GreenPrimary,
+                                                strokeWidth = 2.dp
+                                            )
+                                        } else {
+                                            Icon(
+                                                Icons.Default.Search,
+                                                contentDescription = stringResource(R.string.search_button_desc),
+                                                tint = if (searchQuery.isNotBlank()) GreenPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Compact 1-tap Smart Mode pill (cycles Auto -> YouTube -> YT Music)
+                            val nextSearchMode = when (searchMode) {
+                                SearchMode.AUTO -> SearchMode.YOUTUBE
+                                SearchMode.YOUTUBE -> SearchMode.YOUTUBE_MUSIC
+                                SearchMode.YOUTUBE_MUSIC -> SearchMode.AUTO
+                            }
+                            val modeLabel = when (searchMode) {
+                                SearchMode.AUTO -> stringResource(R.string.search_mode_auto)
+                                SearchMode.YOUTUBE -> stringResource(R.string.search_mode_video)
+                                SearchMode.YOUTUBE_MUSIC -> stringResource(R.string.search_mode_music)
+                            }
+                            Surface(
+                                color = GreenPrimary.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(8.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, GreenPrimary),
+                                modifier = Modifier
+                                    .height(36.dp)
+                                    .clickable { searchMode = nextSearchMode }
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                ) {
+                                    Text(
+                                        text = modeLabel,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = GreenPrimary,
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+
+                            if (isLandscapeScreen) {
+                                IconButton(
+                                    onClick = { isFullscreen = true },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(Icons.Default.Fullscreen, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(20.dp))
                                 }
                             }
                         }
@@ -1037,14 +1135,32 @@ fun MainContent(
                                                     maxLines = 2,
                                                     overflow = TextOverflow.Ellipsis
                                                 )
-                                                Text(
-                                                    text = item.uploader.ifBlank { "YouTube" },
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    fontSize = 12.sp,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                ) {
+                                                    val isMusic = item.source == "YT Music"
+                                                    Surface(
+                                                        color = if (isMusic) GreenPrimary.copy(alpha = 0.18f) else Color(0xFFFF5252).copy(alpha = 0.18f),
+                                                        shape = RoundedCornerShape(4.dp)
+                                                    ) {
+                                                        Text(
+                                                            text = if (isMusic) "🎵 YT Music" else "🎬 YouTube",
+                                                            fontSize = 9.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = if (isMusic) GreenPrimary else Color(0xFFFF8A80),
+                                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                                        )
+                                                    }
+                                                    Text(
+                                                        text = item.uploader.ifBlank { item.source },
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        fontSize = 12.sp,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
                                             }
 
                                             Icon(
@@ -1061,9 +1177,10 @@ fun MainContent(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                if (!isLandscapeScreen) {
+                    Spacer(modifier = Modifier.height(4.dp))
 
-                // Direct URL Card - Ultra Compact
+                    // Direct URL Card - Ultra Compact
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -1380,13 +1497,22 @@ fun MainContent(
 
                     Spacer(modifier = Modifier.height(4.dp))
                 }
+                } else {
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
 
-                // Embedded Video Player Card - Drastically Increased Height & Spacious
+                // Embedded Video Player Card - Maximum Height & Spacious
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .heightIn(min = 320.dp),
+                    modifier = if (isLandscapeScreen) {
+                        Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    } else {
+                        Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .heightIn(min = 320.dp)
+                    },
                     colors = CardDefaults.cardColors(containerColor = Color.Black),
                     shape = RoundedCornerShape(18.dp),
                     border = CardDefaults.outlinedCardBorder().copy(
@@ -1932,6 +2058,11 @@ fun HelpDialog(onDismiss: () -> Unit) {
                     description = stringResource(R.string.help_search_desc)
                 )
                 HelpItem(
+                    icon = Icons.Default.MusicNote,
+                    title = stringResource(R.string.help_smart_search_title),
+                    description = stringResource(R.string.help_smart_search_desc)
+                )
+                HelpItem(
                     icon = Icons.Default.Tune,
                     title = stringResource(R.string.help_eq_title),
                     description = stringResource(R.string.help_eq_desc)
@@ -1990,6 +2121,11 @@ fun HelpDialog(onDismiss: () -> Unit) {
                     icon = Icons.Default.PowerSettingsNew,
                     title = stringResource(R.string.help_quit_title),
                     description = stringResource(R.string.help_quit_desc)
+                )
+                HelpItem(
+                    icon = Icons.Default.Close,
+                    title = stringResource(R.string.help_clear_title),
+                    description = stringResource(R.string.help_clear_desc)
                 )
             }
         },

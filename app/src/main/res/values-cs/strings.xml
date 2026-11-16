@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">TubeXXL</string>
     <string name="support_me">Podpoř mě</string>
+    <string name="clear_button">CLEAR !</string>
+    <string name="player_cleared">Přehrávač vyčištěn</string>
 
     <!-- Header & Search -->
     <string name="search_youtube">Vyhledat na YouTube</string>
@@ -13,6 +15,9 @@
     <string name="search_error">Chyba vyhledávání: %1$s</string>
     <string name="search_results_title">Výsledky vyhledávání (%1$d)</string>
     <string name="hide">Skrýt</string>
+    <string name="search_mode_auto">Auto</string>
+    <string name="search_mode_video">🎬 YouTube</string>
+    <string name="search_mode_music">🎵 YT Music</string>
 
     <!-- Direct URL -->
     <string name="play_from_url">Přehrát z URL / Lokální soubor</string>
@@ -145,7 +150,9 @@
 
     <!-- Help items -->
     <string name="help_search_title">Vyhledávání médií</string>
-    <string name="help_search_desc">Zadejte název videa nebo skladby do vyhledávacího pole a klepněte na tlačítko Lupa. Výsledky z YouTube se zobrazí v přehledném seznamu.</string>
+    <string name="help_search_desc">Zadejte název videa nebo skladby do vyhledávacího pole a klepněte na tlačítko Lupa. Výsledky z YouTube a YouTube Music se zobrazí v přehledném seznamu.</string>
+    <string name="help_smart_search_title">Chytré vyhledávání (YouTube a YT Music)</string>
+    <string name="help_smart_search_desc">V režimu Auto aplikace sama rozpozná záměr dotazu: hudební dotazy (píseň, hudba, album, remix, text, Interpret - Skladba) hledá na YouTube Music; video dotazy (návod, recenze, trailer, koncert, live, 4K) na YouTube; u obecných dotazů zkombinuje oba zdroje a označí je štítkem 🎵 YT Music nebo 🎬 YouTube. Režim můžete kdykoli přepnout i ručně pomocí tlačítek Auto / YouTube / YT Music.</string>
     <string name="help_eq_title">Ekvalizér a Zvukové Efekty</string>
     <string name="help_eq_desc">5-pásmový hardwarový ekvalizér s předvolbami (Rock, Pop, Jazz, Basy...), funkcí Bass Boost pro hluboké basy a Zesilovačem hlasitosti (Loudness Enhancer), který dokáže znatelně zesílit tichá YouTube videa a hudbu.</string>
     <string name="help_github_title">Stažení z GitHubu</string>
@@ -170,5 +177,7 @@
     <string name="help_bg_desc">Přehrávač běží jako služba na popředí. Zvuk hraje i po zhasnutí obrazovky nebo při přepnutí do jiné aplikace.</string>
     <string name="help_quit_title">Ukončení přehrávače</string>
     <string name="help_quit_desc">Klepnutím na červené tlačítko Vypnout v pravém horním rohu okamžitě zastavíte přehrávání na pozadí, uvolníte paměť, ukončíte službu a zavřete aplikaci.</string>
+    <string name="help_clear_title">CLEAR ! (Výchozí stav)</string>
+    <string name="help_clear_desc">Klepnutím na červené tlačítko CLEAR ! vedle názvu aplikace zavřete právě přehrávaný soubor, vymažete vyhledávání, URL i playlist a vrátíte úvodní obrazovku do výchozího stavu.</string>
 
 </resources>

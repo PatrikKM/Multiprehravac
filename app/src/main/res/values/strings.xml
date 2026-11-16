@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">TubeXXL</string>
     <string name="support_me">Support me</string>
+    <string name="clear_button">CLEAR !</string>
+    <string name="player_cleared">Player cleared</string>
 
     <!-- Header & Search -->
     <string name="search_youtube">Search on YouTube</string>
@@ -13,6 +15,9 @@
     <string name="search_error">Search error: %1$s</string>
     <string name="search_results_title">Search Results (%1$d)</string>
     <string name="hide">Hide</string>
+    <string name="search_mode_auto">Auto</string>
+    <string name="search_mode_video">🎬 YouTube</string>
+    <string name="search_mode_music">🎵 YT Music</string>
 
     <!-- Direct URL -->
     <string name="play_from_url">Play from URL / Local file</string>
@@ -145,7 +150,9 @@
 
     <!-- Help items -->
     <string name="help_search_title">Media Search</string>
-    <string name="help_search_desc">Enter the name of a video or song in the search box and tap the Magnifying Glass button. YouTube results will appear in a clear list.</string>
+    <string name="help_search_desc">Enter the name of a video or song in the search box and tap the Magnifying Glass button. Results from YouTube and YouTube Music will appear in a clear list.</string>
+    <string name="help_smart_search_title">Smart Search (YouTube &amp; YT Music)</string>
+    <string name="help_smart_search_desc">In Auto mode, the app detects your intent: queries with music keywords (song, album, lyrics, remix, Artist - Title) search YouTube Music; video keywords (tutorial, review, trailer, live, 4K) search YouTube; general queries combine both sources with 🎵 YT Music and 🎬 YouTube badges. You can also switch modes manually using the Auto / YouTube / YT Music pills.</string>
     <string name="help_eq_title">Equalizer and Audio Effects</string>
     <string name="help_eq_desc">5-band hardware equalizer with presets (Rock, Pop, Jazz, Bass...), Bass Boost for deep bass, and Loudness Enhancer, which can significantly amplify quiet YouTube videos and music.</string>
     <string name="help_github_title">Download from GitHub</string>
@@ -170,5 +177,7 @@
     <string name="help_bg_desc">The player runs as a foreground service. Audio plays even when the screen is off or when switching to another app.</string>
     <string name="help_quit_title">Quit Player</string>
     <string name="help_quit_desc">Tap the red Power button in the top right corner to instantly stop background playback, free memory, terminate the service, and close the application.</string>
+    <string name="help_clear_title">CLEAR ! (Reset Screen)</string>
+    <string name="help_clear_desc">Tap the red CLEAR ! button next to the app name to stop and close the currently playing file, clear search results, URL input, and playlist, and return the home screen to its default state.</string>
 
 </resources>
