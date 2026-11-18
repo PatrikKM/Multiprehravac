@@ -21,6 +21,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -78,9 +79,10 @@ import androidx.media3.session.SessionToken
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
-import com.example.multiprehrava.ui.theme.GreenPrimary
+import com.example.multiprehrava.ui.theme.AmberDark
+import com.example.multiprehrava.ui.theme.AmberLight
+import com.example.multiprehrava.ui.theme.EmeraldPrimary
 import com.example.multiprehrava.ui.theme.MultiprehravačTheme
-import com.example.multiprehrava.ui.theme.TextWhite
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -94,17 +96,19 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val context = LocalContext.current
+            val systemConfig = LocalConfiguration.current
+            val darkTheme = isSystemInDarkTheme()
             var currentLanguage by remember { mutableStateOf(LanguageManager.getLanguage(context)) }
 
-            val localizedResources = remember(currentLanguage) {
+            val localizedResources = remember(currentLanguage, systemConfig) {
                 val locale = Locale(currentLanguage)
                 Locale.setDefault(locale)
-                val config = Configuration(context.resources.configuration)
+                val config = Configuration(systemConfig)
                 config.setLocale(locale)
                 context.createConfigurationContext(config).resources
             }
 
-            val localizedConfiguration = remember(currentLanguage) {
+            val localizedConfiguration = remember(currentLanguage, systemConfig) {
                 localizedResources.configuration
             }
 
@@ -112,7 +116,7 @@ class MainActivity : ComponentActivity() {
                 LocalConfiguration provides localizedConfiguration,
                 LocalResources provides localizedResources
             ) {
-                MultiprehravačTheme {
+                MultiprehravačTheme(darkTheme = darkTheme) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
@@ -708,9 +712,9 @@ fun MainContent(
                                 ).forEach { (langCode, flagEmoji) ->
                                     val isSelected = currentLanguage == langCode
                                     Surface(
-                                        color = if (isSelected) GreenPrimary.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                                         shape = RoundedCornerShape(8.dp),
-                                        border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, GreenPrimary) else null,
+                                        border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null,
                                         modifier = Modifier.clickable {
                                             onLanguageChange(langCode)
                                         }
@@ -741,7 +745,7 @@ fun MainContent(
                                         containerColor = MaterialTheme.colorScheme.surfaceVariant
                                     )
                                 ) {
-                                    Icon(Icons.Default.History, contentDescription = stringResource(R.string.history), tint = GreenPrimary, modifier = Modifier.size(20.dp))
+                                    Icon(Icons.Default.History, contentDescription = stringResource(R.string.history), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                                 }
 
                                 FilledTonalIconButton(
@@ -751,7 +755,7 @@ fun MainContent(
                                         containerColor = MaterialTheme.colorScheme.surfaceVariant
                                     )
                                 ) {
-                                    Icon(Icons.Default.Help, contentDescription = stringResource(R.string.help), tint = GreenPrimary, modifier = Modifier.size(20.dp))
+                                    Icon(Icons.Default.Help, contentDescription = stringResource(R.string.help), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                                 }
 
                                 FilledTonalIconButton(
@@ -761,7 +765,7 @@ fun MainContent(
                                         containerColor = MaterialTheme.colorScheme.surfaceVariant
                                     )
                                 ) {
-                                    Icon(Icons.Default.Security, contentDescription = stringResource(R.string.permissions), tint = GreenPrimary, modifier = Modifier.size(20.dp))
+                                    Icon(Icons.Default.Security, contentDescription = stringResource(R.string.permissions), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                                 }
 
                                 FilledTonalIconButton(
@@ -808,7 +812,7 @@ fun MainContent(
                                 .size(26.dp)
                                 .background(
                                     brush = Brush.linearGradient(
-                                        colors = listOf(GreenPrimary, Color(0xFF00B0FF))
+                                        colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
                                     ),
                                     shape = RoundedCornerShape(7.dp)
                                 ),
@@ -817,7 +821,7 @@ fun MainContent(
                             Icon(
                                 Icons.Default.PlayArrow,
                                 contentDescription = null,
-                                tint = Color.Black,
+                                tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -830,24 +834,27 @@ fun MainContent(
 
                         // Framed red CLEAR ! button next to TubeXXL
                         Surface(
-                            color = Color(0xFFFF5252).copy(alpha = 0.12f),
+                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.12f),
                             shape = RoundedCornerShape(6.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFF5252)),
+                            border = androidx.compose.foundation.BorderStroke(1.5.dp, MaterialTheme.colorScheme.error),
                             modifier = Modifier.clickable { clearAllAction() }
                         ) {
                             Text(
                                 text = stringResource(R.string.clear_button),
                                 fontWeight = FontWeight.ExtraBold,
                                 fontSize = 12.sp,
-                                color = Color(0xFFFF5252),
+                                color = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                             )
                         }
                     }
 
                     // "Podpoř mě" Buy Me a Coffee badge under Control Bar
+                    val isDarkTheme = isSystemInDarkTheme()
+                    val amberTint = if (isDarkTheme) AmberDark else AmberLight
+                    val amberBg = if (isDarkTheme) AmberDark.copy(alpha = 0.15f) else Color(0xFFF59E0B).copy(alpha = 0.18f)
                     Surface(
-                        color = Color(0xFFFFC107).copy(alpha = 0.15f),
+                        color = amberBg,
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.clickable {
                             try {
@@ -869,7 +876,7 @@ fun MainContent(
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp,
-                                color = Color(0xFFFFC107)
+                                color = amberTint
                             )
                         }
                     }
@@ -884,7 +891,7 @@ fun MainContent(
                     border = CardDefaults.outlinedCardBorder().copy(
                         brush = Brush.horizontalGradient(
                             colors = listOf(
-                                GreenPrimary.copy(alpha = 0.25f),
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
                                 Color.Transparent
                             )
                         )
@@ -922,10 +929,10 @@ fun MainContent(
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(36.dp)
-                                    .background(Color(0xFF0F141C), RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
                                     .border(
                                         width = 1.5.dp,
-                                        color = if (searchQuery.isNotEmpty()) GreenPrimary else GreenPrimary.copy(alpha = 0.55f),
+                                        color = if (searchQuery.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.55f),
                                         shape = RoundedCornerShape(8.dp)
                                     )
                                     .padding(start = 10.dp, end = 4.dp),
@@ -950,8 +957,8 @@ fun MainContent(
                                             value = searchQuery,
                                             onValueChange = { searchQuery = it },
                                             singleLine = true,
-                                            textStyle = TextStyle(color = TextWhite, fontSize = 13.sp, fontWeight = FontWeight.Medium),
-                                            cursorBrush = SolidColor(GreenPrimary),
+                                            textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.Medium),
+                                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                                             keyboardActions = KeyboardActions(
                                                 onSearch = { performSearch() }
@@ -974,7 +981,7 @@ fun MainContent(
                                         Icon(
                                             Icons.Default.Mic,
                                             contentDescription = stringResource(R.string.voice_search_desc),
-                                            tint = GreenPrimary,
+                                            tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(18.dp)
                                         )
                                     }
@@ -986,14 +993,14 @@ fun MainContent(
                                         if (isSearching) {
                                             CircularProgressIndicator(
                                                 modifier = Modifier.size(16.dp),
-                                                color = GreenPrimary,
+                                                color = MaterialTheme.colorScheme.primary,
                                                 strokeWidth = 2.dp
                                             )
                                         } else {
                                             Icon(
                                                 Icons.Default.Search,
                                                 contentDescription = stringResource(R.string.search_button_desc),
-                                                tint = if (searchQuery.isNotBlank()) GreenPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                tint = if (searchQuery.isNotBlank()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                                 modifier = Modifier.size(18.dp)
                                             )
                                         }
@@ -1013,9 +1020,9 @@ fun MainContent(
                                 SearchMode.YOUTUBE_MUSIC -> stringResource(R.string.search_mode_music)
                             }
                             Surface(
-                                color = GreenPrimary.copy(alpha = 0.2f),
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
                                 shape = RoundedCornerShape(8.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, GreenPrimary),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
                                 modifier = Modifier
                                     .height(36.dp)
                                     .clickable { searchMode = nextSearchMode }
@@ -1028,7 +1035,7 @@ fun MainContent(
                                         text = modeLabel,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = GreenPrimary,
+                                        color = MaterialTheme.colorScheme.primary,
                                         maxLines = 1
                                     )
                                 }
@@ -1039,7 +1046,7 @@ fun MainContent(
                                     onClick = { isFullscreen = true },
                                     modifier = Modifier.size(32.dp)
                                 ) {
-                                    Icon(Icons.Default.Fullscreen, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(20.dp))
+                                    Icon(Icons.Default.Fullscreen, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                                 }
                             }
                         }
@@ -1057,7 +1064,7 @@ fun MainContent(
                                     stringResource(R.string.search_results_title, searchResults.size),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = GreenPrimary
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                                 TextButton(
                                     onClick = { searchResults = emptyList() },
@@ -1132,6 +1139,7 @@ fun MainContent(
                                                     style = MaterialTheme.typography.titleSmall,
                                                     fontWeight = FontWeight.SemiBold,
                                                     fontSize = 14.sp,
+                                                    color = MaterialTheme.colorScheme.onSurface,
                                                     maxLines = 2,
                                                     overflow = TextOverflow.Ellipsis
                                                 )
@@ -1141,14 +1149,14 @@ fun MainContent(
                                                 ) {
                                                     val isMusic = item.source == "YT Music"
                                                     Surface(
-                                                        color = if (isMusic) GreenPrimary.copy(alpha = 0.18f) else Color(0xFFFF5252).copy(alpha = 0.18f),
+                                                        color = if (isMusic) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f) else MaterialTheme.colorScheme.error.copy(alpha = 0.15f),
                                                         shape = RoundedCornerShape(4.dp)
                                                     ) {
                                                         Text(
                                                             text = if (isMusic) "🎵 YT Music" else "🎬 YouTube",
                                                             fontSize = 9.sp,
                                                             fontWeight = FontWeight.Bold,
-                                                            color = if (isMusic) GreenPrimary else Color(0xFFFF8A80),
+                                                            color = if (isMusic) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                                                             modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
                                                         )
                                                     }
@@ -1166,7 +1174,7 @@ fun MainContent(
                                             Icon(
                                                 Icons.Default.PlayCircleFilled,
                                                 contentDescription = stringResource(R.string.play),
-                                                tint = GreenPrimary,
+                                                tint = MaterialTheme.colorScheme.primary,
                                                 modifier = Modifier.size(24.dp)
                                             )
                                         }
@@ -1199,7 +1207,7 @@ fun MainContent(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Icon(Icons.Default.Link, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(13.dp))
+                                Icon(Icons.Default.Link, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(13.dp))
                                 Text(
                                     text = stringResource(R.string.play_from_url),
                                     fontWeight = FontWeight.Bold,
@@ -1224,10 +1232,10 @@ fun MainContent(
                                 modifier = Modifier
                                     .weight(1.1f)
                                     .height(38.dp)
-                                    .background(Color(0xFF0F141C), RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
                                     .border(
                                         width = 2.dp,
-                                        color = if (urlInput.isNotEmpty()) GreenPrimary else GreenPrimary.copy(alpha = 0.55f),
+                                        color = if (urlInput.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.55f),
                                         shape = RoundedCornerShape(8.dp)
                                     )
                                     .padding(horizontal = 8.dp),
@@ -1237,7 +1245,7 @@ fun MainContent(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Icon(Icons.Default.Link, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(15.dp))
+                                    Icon(Icons.Default.Link, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(15.dp))
                                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                                         if (urlInput.isEmpty()) {
                                             Text(stringResource(R.string.url_placeholder), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1246,8 +1254,8 @@ fun MainContent(
                                             value = urlInput,
                                             onValueChange = { urlInput = it },
                                             singleLine = true,
-                                            textStyle = TextStyle(color = TextWhite, fontSize = 13.sp, fontWeight = FontWeight.Medium),
-                                            cursorBrush = SolidColor(GreenPrimary),
+                                            textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.Medium),
+                                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                             keyboardActions = KeyboardActions(
                                                 onDone = {
@@ -1362,7 +1370,7 @@ fun MainContent(
                                     Icon(
                                         Icons.Default.MusicNote,
                                         contentDescription = null,
-                                        tint = GreenPrimary,
+                                        tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
@@ -1386,7 +1394,7 @@ fun MainContent(
                                             onClick = { playPreviousTrack() },
                                             modifier = Modifier.size(28.dp)
                                         ) {
-                                            Icon(Icons.Default.SkipPrevious, contentDescription = stringResource(R.string.previous), tint = GreenPrimary, modifier = Modifier.size(20.dp))
+                                            Icon(Icons.Default.SkipPrevious, contentDescription = stringResource(R.string.previous), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                                         }
                                     }
 
@@ -1395,7 +1403,7 @@ fun MainContent(
                                             onClick = { playNextTrack() },
                                             modifier = Modifier.size(28.dp)
                                         ) {
-                                            Icon(Icons.Default.SkipNext, contentDescription = stringResource(R.string.next), tint = GreenPrimary, modifier = Modifier.size(20.dp))
+                                            Icon(Icons.Default.SkipNext, contentDescription = stringResource(R.string.next), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                                         }
                                     }
                                 }
@@ -1421,7 +1429,7 @@ fun MainContent(
                                         )
                                     },
                                     leadingIcon = {
-                                        Icon(Icons.Default.HighQuality, contentDescription = null, modifier = Modifier.size(16.dp), tint = GreenPrimary)
+                                        Icon(Icons.Default.HighQuality, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
                                     },
                                     shape = RoundedCornerShape(8.dp)
                                 )
@@ -1439,7 +1447,7 @@ fun MainContent(
                                         )
                                     },
                                     leadingIcon = {
-                                        Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(16.dp), tint = GreenPrimary)
+                                        Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
                                     },
                                     shape = RoundedCornerShape(8.dp)
                                 )
@@ -1457,7 +1465,7 @@ fun MainContent(
                                         )
                                     },
                                     leadingIcon = {
-                                        Icon(Icons.Default.ClosedCaption, contentDescription = null, modifier = Modifier.size(16.dp), tint = GreenPrimary)
+                                        Icon(Icons.Default.ClosedCaption, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
                                     },
                                     shape = RoundedCornerShape(8.dp)
                                 )
@@ -1475,7 +1483,7 @@ fun MainContent(
                                             )
                                         },
                                         leadingIcon = {
-                                            Icon(Icons.Default.Subtitles, contentDescription = null, modifier = Modifier.size(16.dp), tint = GreenPrimary)
+                                            Icon(Icons.Default.Subtitles, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
                                         },
                                         shape = RoundedCornerShape(8.dp)
                                     )
@@ -1487,7 +1495,7 @@ fun MainContent(
                                     onClick = { showShareCastDialog = true },
                                     label = { Text(stringResource(R.string.cast), style = MaterialTheme.typography.labelMedium, fontSize = 13.sp) },
                                     leadingIcon = {
-                                        Icon(Icons.Default.Cast, contentDescription = null, modifier = Modifier.size(16.dp), tint = GreenPrimary)
+                                        Icon(Icons.Default.Cast, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
                                     },
                                     shape = RoundedCornerShape(8.dp)
                                 )
@@ -1518,7 +1526,7 @@ fun MainContent(
                     border = CardDefaults.outlinedCardBorder().copy(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                GreenPrimary.copy(alpha = 0.4f),
+                                EmeraldPrimary.copy(alpha = 0.4f),
                                 Color.Transparent
                             )
                         )
@@ -1561,7 +1569,7 @@ fun MainContent(
                                 modifier = Modifier.align(Alignment.BottomCenter)
                             )
                         } else {
-                            CircularProgressIndicator(color = GreenPrimary)
+                            CircularProgressIndicator(color = EmeraldPrimary)
                         }
                     }
                 }
@@ -1655,10 +1663,10 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                         Box(
                             modifier = Modifier
                                 .size(36.dp)
-                                .background(GreenPrimary.copy(alpha = 0.15f), CircleShape),
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Tune, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.Tune, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                         }
                         Text(
                             stringResource(R.string.equalizer_title),
@@ -1695,8 +1703,8 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Icon(Icons.Default.GraphicEq, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(20.dp))
-                                Text(stringResource(R.string.activate_equalizer), fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                Icon(Icons.Default.GraphicEq, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                                Text(stringResource(R.string.activate_equalizer), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
                             }
                             Switch(
                                 checked = isEnabled,
@@ -1705,8 +1713,8 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                                     AudioFxManager.setEnabled(checked)
                                 },
                                 colors = SwitchDefaults.colors(
-                                    checkedThumbColor = Color.Black,
-                                    checkedTrackColor = GreenPrimary
+                                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                    checkedTrackColor = MaterialTheme.colorScheme.primary
                                 )
                             )
                         }
@@ -1715,7 +1723,7 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                     if (isEnabled) {
                         // Presets Row
                         if (presets.isNotEmpty()) {
-                            Text(stringResource(R.string.presets), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = GreenPrimary)
+                            Text(stringResource(R.string.presets), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1739,7 +1747,7 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                         }
 
                         // 5-Band Equalizer Sliders
-                        Text(stringResource(R.string.freq_bands), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = GreenPrimary)
+                        Text(stringResource(R.string.freq_bands), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                         key(dummyStateTrigger) {
                             for (i in 0 until numBands) {
                                 val bandIndex = i.toShort()
@@ -1760,7 +1768,7 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                                         Text(
                                             text = if (dbValue > 0) "+$dbValue dB" else "$dbValue dB",
                                             fontSize = 11.sp,
-                                            color = GreenPrimary,
+                                            color = MaterialTheme.colorScheme.primary,
                                             fontWeight = FontWeight.Bold
                                         )
                                     }
@@ -1772,8 +1780,8 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                                         },
                                         valueRange = bandRange.first.toFloat()..bandRange.second.toFloat(),
                                         colors = SliderDefaults.colors(
-                                            thumbColor = GreenPrimary,
-                                            activeTrackColor = GreenPrimary
+                                            thumbColor = MaterialTheme.colorScheme.primary,
+                                            activeTrackColor = MaterialTheme.colorScheme.primary
                                         )
                                     )
                                 }
@@ -1790,10 +1798,10 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Icon(Icons.Default.Speaker, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.Speaker, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                                     Text(stringResource(R.string.bass_boost), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
-                                Text("${(bassBoostValue / 10).toInt()}%", fontSize = 11.sp, color = GreenPrimary, fontWeight = FontWeight.Bold)
+                                Text("${(bassBoostValue / 10).toInt()}%", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                             }
                             Slider(
                                 value = bassBoostValue,
@@ -1803,8 +1811,8 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                                 },
                                 valueRange = 0f..1000f,
                                 colors = SliderDefaults.colors(
-                                    thumbColor = GreenPrimary,
-                                    activeTrackColor = GreenPrimary
+                                    thumbColor = MaterialTheme.colorScheme.primary,
+                                    activeTrackColor = MaterialTheme.colorScheme.primary
                                 )
                             )
                         }
@@ -1817,11 +1825,11 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Icon(Icons.Default.VolumeUp, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.VolumeUp, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                                     Text(stringResource(R.string.loudness_enhancer), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                                 val loudnessDb = (loudnessValue / 100).toInt()
-                                Text("+$loudnessDb dB", fontSize = 11.sp, color = GreenPrimary, fontWeight = FontWeight.Bold)
+                                Text("+$loudnessDb dB", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                             }
                             Slider(
                                 value = loudnessValue,
@@ -1831,8 +1839,8 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                                 },
                                 valueRange = 0f..2000f,
                                 colors = SliderDefaults.colors(
-                                    thumbColor = GreenPrimary,
-                                    activeTrackColor = GreenPrimary
+                                    thumbColor = MaterialTheme.colorScheme.primary,
+                                    activeTrackColor = MaterialTheme.colorScheme.primary
                                 )
                             )
                         }
@@ -1870,10 +1878,10 @@ fun HistoryDialog(
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .background(GreenPrimary.copy(alpha = 0.15f), CircleShape),
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.History, contentDescription = null, tint = GreenPrimary)
+                Icon(Icons.Default.History, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
         },
         title = { Text(stringResource(R.string.playback_history), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
@@ -1936,7 +1944,7 @@ fun HistoryDialog(
                                         Icon(
                                             Icons.Default.MusicNote,
                                             contentDescription = null,
-                                            tint = GreenPrimary,
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                             modifier = Modifier.size(24.dp)
                                         )
                                     }
@@ -1947,6 +1955,7 @@ fun HistoryDialog(
                                         text = item.title,
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -2009,10 +2018,10 @@ fun HelpDialog(onDismiss: () -> Unit) {
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .background(GreenPrimary.copy(alpha = 0.15f), CircleShape),
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Help, contentDescription = null, tint = GreenPrimary)
+                Icon(Icons.Default.Help, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
         },
         title = { Text(stringResource(R.string.help), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
@@ -2024,6 +2033,9 @@ fun HelpDialog(onDismiss: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Buy Me a Coffee Support Card
+                val isDarkTheme = isSystemInDarkTheme()
+                val amberTint = if (isDarkTheme) AmberDark else AmberLight
+                val amberBg = if (isDarkTheme) AmberDark.copy(alpha = 0.15f) else Color(0xFFF59E0B).copy(alpha = 0.18f)
                 Card(
                     onClick = {
                         try {
@@ -2033,7 +2045,7 @@ fun HelpDialog(onDismiss: () -> Unit) {
                             Toast.makeText(context, context.getString(R.string.cannot_open_link), Toast.LENGTH_SHORT).show()
                         }
                     },
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFC107).copy(alpha = 0.15f)),
+                    colors = CardDefaults.cardColors(containerColor = amberBg),
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -2044,11 +2056,11 @@ fun HelpDialog(onDismiss: () -> Unit) {
                     ) {
                         Text("☕", fontSize = 22.sp)
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(stringResource(R.string.buy_me_coffee_title), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall, color = Color(0xFFFFC107))
+                            Text(stringResource(R.string.buy_me_coffee_title), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall, color = amberTint)
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(stringResource(R.string.buy_me_coffee_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        Icon(Icons.Default.OpenInNew, contentDescription = null, tint = Color(0xFFFFC107), modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.OpenInNew, contentDescription = null, tint = amberTint, modifier = Modifier.size(18.dp))
                     }
                 }
 
@@ -2162,10 +2174,10 @@ fun PlaybackQualityDialog(
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .background(GreenPrimary.copy(alpha = 0.15f), CircleShape),
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.HighQuality, contentDescription = null, tint = GreenPrimary)
+                Icon(Icons.Default.HighQuality, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
         },
         title = { Text(stringResource(R.string.playback_quality), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
@@ -2195,7 +2207,11 @@ fun PlaybackQualityDialog(
                         ) {
                             RadioButton(selected = isSelected, onClick = null)
                             Spacer(modifier = Modifier.width(10.dp))
-                            Text(label, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                label,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     }
                 }
@@ -2225,10 +2241,10 @@ fun DownloadQualityDialog(
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .background(GreenPrimary.copy(alpha = 0.15f), CircleShape),
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Download, contentDescription = null, tint = GreenPrimary)
+                Icon(Icons.Default.Download, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
         },
         title = { Text(stringResource(R.string.download_quality), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
@@ -2249,10 +2265,10 @@ fun DownloadQualityDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Movie, contentDescription = null, tint = GreenPrimary)
+                        Icon(Icons.Default.Movie, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text(stringResource(R.string.video_1080_title), fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.video_1080_title), fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                             Text(stringResource(R.string.video_1080_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
@@ -2266,10 +2282,10 @@ fun DownloadQualityDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Movie, contentDescription = null, tint = GreenPrimary)
+                        Icon(Icons.Default.Movie, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text(stringResource(R.string.video_720_title), fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.video_720_title), fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                             Text(stringResource(R.string.video_720_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
@@ -2283,10 +2299,10 @@ fun DownloadQualityDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Movie, contentDescription = null, tint = GreenPrimary)
+                        Icon(Icons.Default.Movie, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text(stringResource(R.string.video_480_title), fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.video_480_title), fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                             Text(stringResource(R.string.video_480_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
@@ -2300,10 +2316,10 @@ fun DownloadQualityDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.MusicNote, contentDescription = null, tint = GreenPrimary)
+                        Icon(Icons.Default.MusicNote, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text(stringResource(R.string.audio_320_title), fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.audio_320_title), fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                             Text(stringResource(R.string.audio_320_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
@@ -2317,10 +2333,10 @@ fun DownloadQualityDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.MusicNote, contentDescription = null, tint = GreenPrimary)
+                        Icon(Icons.Default.MusicNote, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text(stringResource(R.string.audio_128_title), fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.audio_128_title), fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                             Text(stringResource(R.string.audio_128_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
@@ -2354,10 +2370,10 @@ fun ShareCastDialog(
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .background(GreenPrimary.copy(alpha = 0.15f), CircleShape),
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Cast, contentDescription = null, tint = GreenPrimary)
+                Icon(Icons.Default.Cast, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
         },
         title = { Text(stringResource(R.string.cast_share_title), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
@@ -2410,9 +2426,9 @@ fun ShareCastDialog(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Icon(Icons.Default.Tv, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(24.dp))
+                        Icon(Icons.Default.Tv, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                         Column {
-                            Text(stringResource(R.string.cast_youtube_title), fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.cast_youtube_title), fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                             Text(
                                 stringResource(R.string.cast_youtube_desc),
                                 style = MaterialTheme.typography.bodySmall,
@@ -2442,9 +2458,9 @@ fun ShareCastDialog(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Icon(Icons.Default.Share, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(24.dp))
+                        Icon(Icons.Default.Share, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                         Column {
-                            Text(stringResource(R.string.share_link_title), fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.share_link_title), fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                             Text(
                                 stringResource(R.string.share_link_desc),
                                 style = MaterialTheme.typography.bodySmall,
@@ -2472,9 +2488,9 @@ fun ShareCastDialog(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Icon(Icons.Default.ContentCopy, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(24.dp))
+                        Icon(Icons.Default.ContentCopy, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                         Column {
-                            Text(stringResource(R.string.copy_link_title), fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.copy_link_title), fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                             Text(
                                 stringResource(R.string.copy_link_desc),
                                 style = MaterialTheme.typography.bodySmall,
@@ -2505,13 +2521,13 @@ private fun HelpItem(icon: ImageVector, title: String, description: String) {
         Box(
             modifier = Modifier
                 .size(36.dp)
-                .background(GreenPrimary.copy(alpha = 0.12f), CircleShape),
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 icon,
                 contentDescription = null,
-                tint = GreenPrimary,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -2542,10 +2558,10 @@ fun PermissionsDialog(
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .background(GreenPrimary.copy(alpha = 0.15f), CircleShape),
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Security, contentDescription = null, tint = GreenPrimary)
+                Icon(Icons.Default.Security, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
         },
         title = { Text(stringResource(R.string.permissions_title), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
@@ -2636,7 +2652,7 @@ private fun PermissionItem(
             Icon(
                 icon,
                 contentDescription = null,
-                tint = if (isGranted) GreenPrimary else MaterialTheme.colorScheme.error,
+                tint = if (isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(24.dp).padding(top = 2.dp)
             )
             Column(modifier = Modifier.weight(1f)) {
@@ -2645,11 +2661,11 @@ private fun PermissionItem(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(title, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall)
+                    Text(title, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
                     Text(
                         status,
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isGranted) GreenPrimary else MaterialTheme.colorScheme.error,
+                        color = if (isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -2780,7 +2796,7 @@ fun FullscreenPlayer(
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Icon(Icons.Default.SkipPrevious, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
+                            Icon(Icons.Default.SkipPrevious, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(stringResource(R.string.previous))
                         }
@@ -2795,7 +2811,7 @@ fun FullscreenPlayer(
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Icon(Icons.Default.SkipNext, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
+                            Icon(Icons.Default.SkipNext, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(stringResource(R.string.next))
                         }
@@ -2810,7 +2826,7 @@ fun FullscreenPlayer(
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Icon(Icons.Default.HighQuality, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
+                        Icon(Icons.Default.HighQuality, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(if (selectedPlaybackQuality != "auto") "${selectedPlaybackQuality}p" else stringResource(R.string.quality))
                     }
@@ -2824,7 +2840,7 @@ fun FullscreenPlayer(
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
+                        Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(stringResource(R.string.help_eq_title).split(" ").first())
                     }
@@ -2838,7 +2854,7 @@ fun FullscreenPlayer(
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Icon(Icons.Default.ClosedCaption, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
+                        Icon(Icons.Default.ClosedCaption, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(stringResource(R.string.ai_subtitles), fontWeight = FontWeight.Bold)
                     }
@@ -2853,7 +2869,7 @@ fun FullscreenPlayer(
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Icon(Icons.Default.ClosedCaption, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
+                            Icon(Icons.Default.ClosedCaption, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(stringResource(R.string.subtitles))
                         }
@@ -2867,7 +2883,7 @@ fun FullscreenPlayer(
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Icon(Icons.Default.Cast, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
+                        Icon(Icons.Default.Cast, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(stringResource(R.string.cast))
                     }
@@ -2881,7 +2897,7 @@ fun FullscreenPlayer(
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
+                        Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(stringResource(R.string.download))
                     }
@@ -2901,7 +2917,7 @@ fun FullscreenPlayer(
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Icon(Icons.Default.AspectRatio, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
+                        Icon(Icons.Default.AspectRatio, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(4.dp))
                         val text = when (resizeMode) {
                             AspectRatioFrameLayout.RESIZE_MODE_FILL -> stringResource(R.string.resize_fill)
@@ -2920,14 +2936,14 @@ fun FullscreenPlayer(
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Icon(Icons.Default.ScreenRotation, contentDescription = null, modifier = Modifier.size(18.dp), tint = GreenPrimary)
+                        Icon(Icons.Default.ScreenRotation, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(if (isLandscape) stringResource(R.string.orientation_portrait) else stringResource(R.string.orientation_landscape))
                     }
                 }
             }
         } else {
-            CircularProgressIndicator(color = GreenPrimary)
+            CircularProgressIndicator(color = EmeraldPrimary)
         }
     }
 }
